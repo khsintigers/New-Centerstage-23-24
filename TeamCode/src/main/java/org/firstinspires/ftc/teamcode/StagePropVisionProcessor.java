@@ -21,11 +21,13 @@ Value: 0-255 Brightness
  */
 public class StagePropVisionProcessor implements VisionProcessor {
     //x,y upper left hand corner of rectangle
-    public Rect rectLeft = new Rect(100,140,100,100);
-    public Rect rectMiddle = new Rect(300,20,200,100);
-    public Rect rectRight = new Rect(500,140,100,150);
+    public Rect rectLeft = new Rect(10,90,100,120);
+    public Rect rectMiddle = new Rect(210,30,200,100);
+    public Rect rectRight = new Rect(520,75,100,150);
     Selected selection = Selected.NONE;
-
+//left was 100 and width was 100, height was 100 y 140
+    //mid x 300 y 20 width 200 height 100
+    //right 500 y 140 wid 100 hei 150
     double leftValue;
     double middleValue;
     double rightValue;
