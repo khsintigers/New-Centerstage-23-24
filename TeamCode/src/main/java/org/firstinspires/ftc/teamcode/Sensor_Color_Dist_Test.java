@@ -37,8 +37,13 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
-
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import java.util.Locale;
@@ -85,11 +90,23 @@ public class Sensor_Color_Dist_Test extends LinearOpMode {
      * to the target object.
      *
      */
+    private ElapsedTime runtime = new ElapsedTime();
+    private DcMotor left_rear = null;
+    private DcMotor right_rear = null;
+    private DcMotor left_front = null;
+    private DcMotor right_front = null;
     ColorSensor sensorColor;
     DistanceSensor sensorDistance;
 
     @Override
     public void runOpMode() {
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
+        sleep(500);
+        left_rear    = hardwareMap.get(DcMotor.class, "RearLeft");
+        right_rear   = hardwareMap.get(DcMotor.class, "RearRight");
+        left_front   = hardwareMap.get(DcMotor.class, "FrontLeft");
+        right_front  = hardwareMap.get(DcMotor.class, "FrontRight");
 
         // get a reference to the color sensor.
         sensorColor = hardwareMap.get(ColorSensor.class, "Sensor Color");
@@ -112,12 +129,34 @@ public class Sensor_Color_Dist_Test extends LinearOpMode {
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
         final View relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
 
+        left_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        right_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        right_rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        left_rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+        left_front.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        right_front.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        right_rear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        left_rear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
+        right_front.setDirection(DcMotorSimple.Direction.REVERSE);
+        left_front.setDirection(DcMotorSimple.Direction.REVERSE);
+        final double maxPower = 0.5;
+        // set power to zero to avoid a FTC bug
+        right_front.setPower(0);
+        left_front.setPower(0);
+        left_rear.setPower(0);
+        right_rear.setPower(0);
+
         // wait for the start button to be pressed.
         waitForStart();
 
         // loop and read the RGB and distance data.
         // Note we use opModeIsActive() as our loop condition because it is an interruptible method.
         while (opModeIsActive()) {
+            mechanum();
             // convert the RGB values to HSV values.
             // multiply by the SCALE_FACTOR.
             // then cast it back to int (SCALE_FACTOR is a double)
@@ -125,7 +164,8 @@ public class Sensor_Color_Dist_Test extends LinearOpMode {
                     (int) (sensorColor.green() * SCALE_FACTOR),
                     (int) (sensorColor.blue() * SCALE_FACTOR),
                     hsvValues);
-
+            int redCutOff = 90;
+            int blueCutOff = 120;
             // send the info back to driver station using telemetry function.
             telemetry.addData("Distance (cm)",
                     String.format(Locale.US, "%.02f", sensorDistance.getDistance(DistanceUnit.CM)));
@@ -134,7 +174,9 @@ public class Sensor_Color_Dist_Test extends LinearOpMode {
             telemetry.addData("Green", sensorColor.green());
             telemetry.addData("Blue ", sensorColor.blue());
             telemetry.addData("Hue", hsvValues[0]);
-
+            if ((sensorColor.red() >= 120) || (sensorColor.blue() >= 140)){
+                telemetry.addData("Color Found!",sensorColor.blue());
+            }
             // change the background color to match the color detected by the RGB sensor.
             // pass a reference to the hue, saturation, and value array as an argument
             // to the HSVToColor method.
@@ -154,4 +196,27 @@ public class Sensor_Color_Dist_Test extends LinearOpMode {
             }
         });
     }
+    public void mechanum(){
+        final double maxPower = 0.25;   //0.5
+
+        double joy1Y = gamepad1.left_stick_x;
+        joy1Y = Math.abs(joy1Y) > 0.15 ? joy1Y*3/4: 0;
+        double joy1X = gamepad1.left_stick_y;
+        joy1X = Math.abs(joy1X) > 0.15 ? joy1X*3/4: 0;
+        double joy2X = gamepad1.right_stick_x;
+        joy2X = Math.abs(joy2X) > 0.15 ? joy2X*3/4: 0;
+
+        left_front.setPower(Math.max(-maxPower, Math.min(maxPower, joy1Y + joy2X - joy1X)));
+        right_front.setPower(Math.max(-maxPower, Math.min(maxPower, joy1Y + joy2X + joy1X)));
+        left_rear.setPower(Math.max(-maxPower, Math.min(maxPower, joy1Y - joy2X + joy1X)));
+        right_rear.setPower(Math.max(-maxPower, Math.min(maxPower, joy1Y - joy2X - joy1X)));
+
+
+        //telemetry.addData("LF: ",Math.max(-maxPower, Math.min(maxPower, joy1Y + joy2X - joy1X)));
+        //telemetry.addData("RF: ",Math.max(-maxPower, Math.min(maxPower, joy1Y + joy2X + joy1X)));
+        //telemetry.addData("LR: ",Math.max(-maxPower, Math.min(maxPower, joy1Y - joy2X + joy1X)));
+        //telemetry.addData("RR: ",Math.max(-maxPower, Math.min(maxPower, joy1Y - joy2X - joy1X)));
+        //telemetry.update();
+    }
+
 }
