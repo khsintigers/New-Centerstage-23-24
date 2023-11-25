@@ -1,9 +1,20 @@
 package org.firstinspires.ftc.teamcode;
 
 import android.app.Activity;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.view.View;
+import android.graphics.Color;
+import android.graphics.Paint;
 
+
+import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
+import org.firstinspires.ftc.vision.VisionProcessor;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -14,9 +25,10 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
 import java.util.Locale;
 
 
@@ -28,7 +40,13 @@ public class UseVisionProcessor extends LinearOpMode{
     private DcMotor left_rear = null;
     private DcMotor right_front  = null;
     private DcMotor right_rear  = null;
-    static final double     COUNTS_PER_MOTOR_REV    = 2150.8/4 ;    // eg: TETRIX Motor Encoder
+    private DcMotor swing_motor = null;
+    private DcMotor left_lift  = null;
+    private DcMotor right_lift  = null;
+    public DcMotor extend= null;
+    public Servo pixel_claw = null;
+    public Servo pixel_sleeve = null;
+    static final double     COUNTS_PER_MOTOR_REV    = 537.7 ;    // 1440 = tetrix motor, 537.7 = goBuilda
     static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // No External Gearing.
     static final double     WHEEL_DIAMETER_INCHES   = 3.9 ;     // For figuring circumference
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
@@ -58,6 +76,12 @@ public class UseVisionProcessor extends LinearOpMode{
         drawRectangleProcessor = new StagePropVisionProcessor();
         visionPortal = VisionPortal.easyCreateWithDefaults(
                 hardwareMap.get(WebcamName.class, "MyEye"), drawRectangleProcessor);
+
+    }
+    StagePropVisionProcessor obj = new StagePropVisionProcessor();
+
+    public StagePropVisionProcessor getDrawRectangleProcessor() {
+        return drawRectangleProcessor;
     }
 
     public void runOpMode() {
@@ -68,6 +92,11 @@ public class UseVisionProcessor extends LinearOpMode{
         left_front  = hardwareMap.get(DcMotor.class, "FrontLeft");
         right_front = hardwareMap.get(DcMotor.class, "FrontRight");
         sensorColor = hardwareMap.get(ColorSensor.class, "Sensor Color");
+        swing_motor  = hardwareMap.get(DcMotor.class, "SwingMotor");
+        left_lift  = hardwareMap.get(DcMotor.class, "LeftLift");
+        right_lift  = hardwareMap.get(DcMotor.class, "RightLift");
+        pixel_claw= hardwareMap.get(Servo.class, "PixelClaw");
+        pixel_sleeve= hardwareMap.get(Servo.class, "PixelSleeve");
 
         // get a reference to the distance sensor that shares the same name.
         sensorDistance = hardwareMap.get(DistanceSensor.class, "Sensor Color");
@@ -92,10 +121,19 @@ public class UseVisionProcessor extends LinearOpMode{
         left_front.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         right_front.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+
         left_rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         right_rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         left_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         right_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        left_lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        right_lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        left_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        right_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        left_rear.setDirection(DcMotorSimple.Direction.REVERSE);
+        left_lift.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Send telemetry message to indicate successful Encoder reset
         telemetry.addData("Starting at",  "%7d :%7d :%7d :%7d",
@@ -110,8 +148,36 @@ public class UseVisionProcessor extends LinearOpMode{
         if(opModeIsActive()) {
             // Step through each leg of the path,
             // Note: Reverse movement is obtained by setting a negative distance (not speed)
-            encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
-            encoderDrive(DRIVE_SPEED, 18, 18, 5.0, 2);
+            double leftAvg = drawRectangleProcessor.getLeftAvg();
+            double middleAvg = drawRectangleProcessor.getMiddleAvg();
+            double rightAvg = drawRectangleProcessor.getRightAvg();
+            int moveTo; // right = 1, middle = 2, left = 3
+            if(Math.max(rightAvg, middleAvg) == rightAvg) {
+                if(Math.max(rightAvg, leftAvg) == rightAvg) {
+                    moveTo = 1;
+                } else {
+                    moveTo = 3;
+                }
+            } else {
+                if(Math.max(middleAvg, leftAvg) == middleAvg) {
+                    moveTo = 2;
+                } else {
+                    moveTo = 3;
+                }
+            }
+            encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 0); // move forward
+            if(moveTo == 1) {
+                encoderDrive(DRIVE_SPEED, 18, 18, 5.0, 3); // move right
+            } else if(moveTo == 2) {
+                encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 0); // move forward
+            } else if (moveTo == 3) {
+                encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 2); // move left
+            } else {
+                encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 0); // move forward
+            }
+            telemetry.addData("Success?:", moveTo);
+//            encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
+//            encoderDrive(DRIVE_SPEED, 18, 18, 5.0, 2);
 //            encoderDrive(DRIVE_SPEED, 24, 24, 5.0, 3);
 //            encoderDrive(DRIVE_SPEED,  24,  24, 5.0, 1);
 
@@ -156,7 +222,6 @@ public class UseVisionProcessor extends LinearOpMode{
         int newLeftTargetF;
         int newRightTargetF;
         double offsetLRPerc = 1.154;
-
         // Ensure that the OpMode is still active
         if (opModeIsActive()) {
 
@@ -218,28 +283,27 @@ public class UseVisionProcessor extends LinearOpMode{
             int blueCutOff = 120;
             while (opModeIsActive() &&
                     (runtime.seconds() < timeoutS) &&
-                    (left_rear.isBusy() && right_rear.isBusy() && left_front.isBusy() && right_front.isBusy())) {
+                    (wheelsInMotion())) {
                 Color.RGBToHSV((int) (sensorColor.red() * SCALE_FACTOR),
                         (int) (sensorColor.green() * SCALE_FACTOR),
                         (int) (sensorColor.blue() * SCALE_FACTOR),
                         hsvValues);
+                // Displays Data
                 telemetry.addData("Distance (cm)",
                         String.format(Locale.US, "%.02f", sensorDistance.getDistance(DistanceUnit.CM)));
-                telemetry.addData("Alpha", sensorColor.alpha());
                 telemetry.addData("Red  ", sensorColor.red());
-                telemetry.addData("Green", sensorColor.green());
                 telemetry.addData("Blue ", sensorColor.blue());
                 telemetry.addData("Hue", hsvValues[0]);
 
                 if ((sensorColor.red() >= redCutOff) || (sensorColor.blue() >= blueCutOff)){
                     telemetry.addData("Color Found!", "STOP!");
-                    left_rear.setPower(0);
-                    right_rear.setPower(0);
-                    left_front.setPower(0);
-                    right_front.setPower(0);
+                    stopAllMotion();
+                    sleep(1000);
+                    pixel_claw.setPosition(0.8);
+                    pixel_sleeve.setPosition(0.0);
                 }
 
-                // Display it for the driver.
+                // Display encoder information for the driver.
                 telemetry.addData("Running to",  " %7d :%7d :%7d :%7d:", newLeftTargetR,  newRightTargetR, newLeftTargetF, newRightTargetF);
                 telemetry.addData("Currently at",  " at  %7d :%7d :%7d :%7d:",
                         left_rear.getCurrentPosition(), right_rear.getCurrentPosition(), left_front.getCurrentPosition(), right_front.getCurrentPosition());
@@ -247,10 +311,7 @@ public class UseVisionProcessor extends LinearOpMode{
             }
 
             // Stop all motion;
-            left_rear.setPower(0);
-            right_rear.setPower(0);
-            left_front.setPower(0);
-            right_front.setPower(0);
+            stopAllMotion();
 
             // Turn off RUN_TO_POSITION
             left_rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -263,4 +324,15 @@ public class UseVisionProcessor extends LinearOpMode{
 
 
     }
+    public void stopAllMotion() {
+        left_rear.setPower(0);
+        right_rear.setPower(0);
+        left_front.setPower(0);
+        right_front.setPower(0);
+    }
+    public boolean wheelsInMotion() {
+        return left_rear.isBusy() && right_rear.isBusy() && left_front.isBusy() && right_front.isBusy();
+    }
+
+
 }

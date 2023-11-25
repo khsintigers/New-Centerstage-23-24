@@ -41,7 +41,7 @@ import java.util.Locale;
 
 
 @Autonomous(name="AprilTagAutoTest", group="AprilTagAutoTest")
-//@Disabled
+@Disabled
 
 public class AprilTagAutoTest extends LinearOpMode {
 

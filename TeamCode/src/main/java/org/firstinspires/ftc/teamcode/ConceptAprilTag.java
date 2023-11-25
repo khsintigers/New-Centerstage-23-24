@@ -60,7 +60,7 @@ import java.util.ArrayList;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  */
 @TeleOp(name = "Concept: AprilTag", group = "Concept")
-//@Disabled
+@Disabled
 //Motors :D vvvvvvvv
 public class ConceptAprilTag extends LinearOpMode {
 

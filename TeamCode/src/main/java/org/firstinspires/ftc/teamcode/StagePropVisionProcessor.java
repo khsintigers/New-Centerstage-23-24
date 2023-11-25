@@ -19,6 +19,7 @@ Saturation: 0-255 Intensity of Color
 Value: 0-255 Brightness
 
  */
+
 public class StagePropVisionProcessor implements VisionProcessor {
     //x,y upper left hand corner of rectangle
     public Rect rectLeft = new Rect(10,90,100,120);
@@ -41,7 +42,7 @@ public class StagePropVisionProcessor implements VisionProcessor {
 
     @Override
     public Object processFrame(Mat frame, long captureTimeNanos) {
-        Imgproc.cvtColor(frame,hsvMat,Imgproc.COLOR_RGB2HSV);
+        Imgproc.cvtColor(frame, hsvMat, Imgproc.COLOR_RGB2HSV);
 
         double satRectLeft = getAvgSaturation(hsvMat, rectLeft);
         double satRectMiddle = getAvgSaturation(hsvMat, rectMiddle);
@@ -50,14 +51,17 @@ public class StagePropVisionProcessor implements VisionProcessor {
         leftValue = satRectLeft;
         middleValue = satRectMiddle;
         rightValue = satRectRight;
-
-        if ((satRectLeft > satRectMiddle) && (satRectLeft > satRectRight)) {
-            return Selected.LEFT;
-        } else if ((satRectMiddle > satRectLeft) && (satRectMiddle > satRectRight)) {
-            return Selected.MIDDLE;
+            int propgo = 0;
+            if ((satRectLeft > satRectMiddle) && (satRectLeft > satRectRight)) {
+                propgo = 1;
+                return Selected.LEFT;
+            } else if ((satRectMiddle > satRectLeft) && (satRectMiddle > satRectRight)) {
+                propgo = 2;
+                return Selected.MIDDLE;
+            }
+             propgo = 3;
+            return Selected.RIGHT;
         }
-        return Selected.RIGHT;
-    }
 
     protected double getAvgSaturation(Mat input, Rect rect) {
         submat = input.submat(rect);

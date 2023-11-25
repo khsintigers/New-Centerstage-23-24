@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -10,9 +9,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="DPadDrive", group="Linear Opmode")
-@Disabled
-public class DPadDrive extends LinearOpMode{
+@TeleOp(name="CenterStage-Driver", group="Linear Opmode")
+
+public class CenterStage_Driver extends LinearOpMode{
 
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor left_rear = null;
@@ -87,69 +86,54 @@ public class DPadDrive extends LinearOpMode{
         runtime.reset();
 
         while (opModeIsActive()) {
-            //mechanum();
+            mechanum();
 
-            if (gamepad1.dpad_up) {
-                left_front.setPower(0.2);
-                right_front.setPower(0.2);
-                left_rear.setPower(0.2);
-                right_rear.setPower(0.2);
-            }
-            else {
-                if (gamepad1.dpad_down) {
-                    left_front.setPower(-0.2);
-                    right_front.setPower(-0.2);
-                    left_rear.setPower(-0.2);
-                    right_rear.setPower(-0.2);
-                }
-            else {
-                    left_front.setPower(0);
-                    right_front.setPower(0);
-                    left_rear.setPower(0);
-                    right_rear.setPower(0);
-                }
-            }
 
-            if (gamepad1.dpad_left) {
-                swing_motor.setPower(0.3);
+            //swing motor
+            if (gamepad2.left_trigger==1.0) {
+                swing_motor.setPower(0.2);
             }
             else {
-                if (gamepad1.dpad_right) {
-                    swing_motor.setPower(-0.3);
+                if (gamepad2.left_bumper) {
+                    swing_motor.setPower(-0.2);
                 }
                 else {
                     swing_motor.setPower(0);
                 }
             }
 
-            if (gamepad1.x) {
-                pixel_claw.setPosition(0.8); //open
-            }
-            if (gamepad1.b) {
-                pixel_claw.setPosition(1); //close
-            }
-
-            if (gamepad1.y) {
-                pixel_sleeve.setPosition(0.0); //open
-            }
-            if (gamepad1.a) {
-                pixel_sleeve.setPosition(0.2); //close
-            }
-
-            if (gamepad2.dpad_left) {
-                left_lift.setPower(0.5);
-                right_lift.setPower(0.5);
+            if (gamepad2.right_trigger==1.0) {
+                left_lift.setPower(0.2);
+                right_lift.setPower(0.2);
             }
             else {
-                if (gamepad2.dpad_right) {
-                    left_lift.setPower(-0.5);
-                    right_lift.setPower(-0.5);
+                if (gamepad2.right_bumper) {
+                    left_lift.setPower(-0.2);
+                    right_lift.setPower(-0.2);
                 }
                 else {
                     left_lift.setPower(0);
                     right_lift.setPower(0);
                 }
             }
+
+
+
+            if (gamepad2.x) {
+                pixel_claw.setPosition(0.8); //open
+            }
+            if (gamepad2.b) {
+                pixel_claw.setPosition(1); //close
+            }
+
+            if (gamepad2.y) {
+                pixel_sleeve.setPosition(0.0); //open
+            }
+            if (gamepad2.a) {
+                pixel_sleeve.setPosition(0.2); //close
+            }
+
+
 
 
 
@@ -200,21 +184,5 @@ public class DPadDrive extends LinearOpMode{
 
 
 
-/*
-    public void Mechanum(){
-        final double maxPower = 1;
 
-        double joy1Y = -gamepad1.left_stick_x;
-        joy1Y = Math.abs(joy1Y) > 0.15 ? joy1Y*3/4: 0;
-        double joy1X = gamepad1.left_stick_y;
-        joy1X = Math.abs(joy1X) > 0.15 ? joy1X*3/4: 0;
-        double joy2X = gamepad1.right_stick_x;
-        joy2X = Math.abs(joy2X) > 0.15 ? joy2X*3/4: 0;
 
-        rf.setPower(Math.max(-maxPower, Math.min(maxPower, joy1Y + joy2X + joy1X)));
-        lf.setPower(Math.max(-maxPower, Math.min(maxPower, joy1Y + joy2X - joy1X)));
-        rr.setPower(Math.max(-maxPower, Math.min(maxPower, joy1Y - joy2X - joy1X)));
-        lr.setPower(Math.max(-maxPower, Math.min(maxPower, joy1Y - joy2X + joy1X)));
-    }
-
-    */
