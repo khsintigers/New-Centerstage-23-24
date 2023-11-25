@@ -1,27 +1,16 @@
 package org.firstinspires.ftc.teamcode;
 
 import android.app.Activity;
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.view.View;
-import android.graphics.Color;
-import android.graphics.Paint;
 
 
-import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
-import org.firstinspires.ftc.vision.VisionProcessor;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.teamcode.StagePropVisionProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -33,7 +22,7 @@ import java.util.Locale;
 
 
 @Autonomous()
-public class UseVisionProcessor extends LinearOpMode{
+public class CenterStage_Auto_goBuilda extends LinearOpMode{
 
     /* Declare OpMode members. */
     private DcMotor left_front   = null;
