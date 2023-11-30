@@ -21,7 +21,7 @@ import java.util.Locale;
 
 
 @Autonomous()
-public class CenterStage_Auto_tetrix extends LinearOpMode{
+public class CenterStage_Auto_goBuilda2 extends LinearOpMode{
 
     /* Declare OpMode members. */
     private DcMotor left_front   = null;
@@ -34,7 +34,7 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
     public DcMotor extend= null;
     public Servo pixel_claw = null;
     public Servo pixel_sleeve = null;
-    static final double     COUNTS_PER_MOTOR_REV    = 1440 ;    // 1440 = tetrix motor, 537.7 = goBuilda
+    static final double     COUNTS_PER_MOTOR_REV    = 537.7 ;    // 1440 = tetrix motor, 537.7 = goBuilda
     static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // No External Gearing.
     static final double     WHEEL_DIAMETER_INCHES   = 3.9 ;     // For figuring circumference
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
@@ -58,6 +58,7 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
     // sometimes it helps to multiply the raw RGB values with a scale factor
     // to amplify/attentuate the measured values.
     private final double SCALE_FACTOR = 255;
+    private boolean isBlue = true;
 
 
     public void initVision() {
@@ -99,28 +100,27 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        //left_rear.setDirection(DcMotor.Direction.REVERSE);
-        //right_rear.setDirection(DcMotor.Direction.FORWARD);
-        //left_front.setDirection(DcMotor.Direction.REVERSE);
-       // right_front.setDirection(DcMotor.Direction.FORWARD);
-
+        left_front.setDirection(DcMotorSimple.Direction.FORWARD);
         left_rear.setDirection(DcMotorSimple.Direction.FORWARD);
         right_rear.setDirection(DcMotorSimple.Direction.REVERSE);
-        left_front.setDirection(DcMotorSimple.Direction.FORWARD);
         right_front.setDirection(DcMotorSimple.Direction.REVERSE);
-
 
         left_rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         right_rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         left_front.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         right_front.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+
+        left_rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        right_rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        left_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        right_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         left_lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         right_lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         left_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         right_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-//        left_rear.setDirection(DcMotorSimple.Direction.REVERSE);
         left_lift.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Send telemetry message to indicate successful Encoder reset
@@ -129,6 +129,12 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
                 right_rear.getCurrentPosition(),
                 left_front.getCurrentPosition(),
                 right_front.getCurrentPosition());
+        sleep(3000);
+        telemetry.addData("Identified", drawRectangleProcessor.getSelection());
+        telemetry.addData( "Left Avg: ",drawRectangleProcessor.getLeftAvg());
+        telemetry.addData( "Middle Avg: ",drawRectangleProcessor.getMiddleAvg());
+        telemetry.addData( "Right Avg: ",drawRectangleProcessor.getRightAvg());
+        telemetry.update();
         telemetry.update();
 
         // Wait for the game to start (driver presses PLAY)
@@ -153,7 +159,7 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
                     moveTo = 3;
                 }
             }
-            encoderDrive(DRIVE_SPEED,  36,  36, 5, 0, true); // move forward
+            encoderDrive(DRIVE_SPEED,  32,  32, 5,0, false); // move forward
             if(moveTo == 1) {
                 encoderDrive(DRIVE_SPEED, 18, 18, 5, 3, true); // move right
             } else if(moveTo == 2) {
@@ -167,7 +173,24 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
             telemetry.addData("Success?:", moveTo);
             pixel_claw.setPosition(0.8);
             pixel_sleeve.setPosition(0.0);
-            encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
+            encoderDrive(DRIVE_SPEED, 24, 24, 5, 1, false);
+            if(isBlue) {
+                if(moveTo == 3) {
+                    encoderDrive(DRIVE_SPEED, 48, 48, 5, 2, false);
+                    encoderDrive(DRIVE_SPEED, 18, 18, 5, 2, false);
+                } else {
+                    encoderDrive(DRIVE_SPEED, 36, 36, 5, 2, false);
+                }
+            } else {
+                if(moveTo == 1) {
+                    encoderDrive(DRIVE_SPEED, 48, 48, 5, 3, false);//was 36 before
+                    encoderDrive(DRIVE_SPEED, 18, 18, 5, 3, false);
+                } else {
+                    encoderDrive(DRIVE_SPEED, 36, 36, 5, 3, false);
+                }
+
+            }
+
 //            encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
 //            encoderDrive(DRIVE_SPEED, 18, 18, 5.0, 2);
 //            encoderDrive(DRIVE_SPEED, 24, 24, 5.0, 3);
@@ -288,11 +311,17 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
                     telemetry.addData("Blue ", sensorColor.blue());
                     telemetry.addData("Hue", hsvValues[0]);
 
-                    if ((sensorColor.red() >= redCutOff) || (sensorColor.blue() >= blueCutOff)){
-                        telemetry.addData("Color Found!", "STOP!");
+                    if (sensorColor.red() >= redCutOff){
+                        telemetry.addData("Red Found!", "STOP!");
                         stopAllMotion();
-                        sleep(1000);
+                        isBlue = false;
+                        sleep(500);
 
+                    } else if (sensorColor.blue() >= blueCutOff) {
+                        telemetry.addData("Blue Found!", "STOP!");
+                        stopAllMotion();
+                        isBlue = true;
+                        sleep(500);
                     }
                 }
 

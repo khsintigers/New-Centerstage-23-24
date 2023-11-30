@@ -59,6 +59,7 @@ public class CenterStage_Auto_goBuilda extends LinearOpMode{
     // sometimes it helps to multiply the raw RGB values with a scale factor
     // to amplify/attentuate the measured values.
     private final double SCALE_FACTOR = 255;
+    private boolean isBlue = true;
 
 
     public void initVision() {
@@ -100,10 +101,10 @@ public class CenterStage_Auto_goBuilda extends LinearOpMode{
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        left_rear.setDirection(DcMotor.Direction.REVERSE);
-        right_rear.setDirection(DcMotor.Direction.FORWARD);
-        left_front.setDirection(DcMotor.Direction.REVERSE);
-        right_front.setDirection(DcMotor.Direction.FORWARD);
+        left_front.setDirection(DcMotorSimple.Direction.FORWARD);
+        left_rear.setDirection(DcMotorSimple.Direction.FORWARD);
+        right_rear.setDirection(DcMotorSimple.Direction.REVERSE);
+        right_front.setDirection(DcMotorSimple.Direction.REVERSE);
 
         left_rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         right_rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -121,7 +122,6 @@ public class CenterStage_Auto_goBuilda extends LinearOpMode{
         left_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         right_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        left_rear.setDirection(DcMotorSimple.Direction.REVERSE);
         left_lift.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Send telemetry message to indicate successful Encoder reset
@@ -130,6 +130,12 @@ public class CenterStage_Auto_goBuilda extends LinearOpMode{
                 right_rear.getCurrentPosition(),
                 left_front.getCurrentPosition(),
                 right_front.getCurrentPosition());
+        sleep(3000);
+        telemetry.addData("Identified", drawRectangleProcessor.getSelection());
+        telemetry.addData( "Left Avg: ",drawRectangleProcessor.getLeftAvg());
+        telemetry.addData( "Middle Avg: ",drawRectangleProcessor.getMiddleAvg());
+        telemetry.addData( "Right Avg: ",drawRectangleProcessor.getRightAvg());
+        telemetry.update();
         telemetry.update();
 
         // Wait for the game to start (driver presses PLAY)
@@ -154,17 +160,38 @@ public class CenterStage_Auto_goBuilda extends LinearOpMode{
                     moveTo = 3;
                 }
             }
-            encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 0); // move forward
+            encoderDrive(DRIVE_SPEED,  32,  32, 5,0, false); // move forward
             if(moveTo == 1) {
-                encoderDrive(DRIVE_SPEED, 18, 18, 5.0, 3); // move right
+                encoderDrive(DRIVE_SPEED, 18, 18, 5, 3, true); // move right
             } else if(moveTo == 2) {
-                encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 0); // move forward
+                encoderDrive(DRIVE_SPEED,  36,  36, 5, 0, true); // move forward
             } else if (moveTo == 3) {
-                encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 2); // move left
+                encoderDrive(DRIVE_SPEED,  36,  36, 5, 2, true); // move left
             } else {
-                encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 0); // move forward
+                encoderDrive(DRIVE_SPEED,  36,  36, 5, 0, true); // move forward
             }
+            encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
             telemetry.addData("Success?:", moveTo);
+            pixel_claw.setPosition(0.8);
+            pixel_sleeve.setPosition(0.0);
+            encoderDrive(DRIVE_SPEED, 24, 24, 5, 1, false);
+            if(isBlue) {
+                if(moveTo == 3) {
+                    encoderDrive(DRIVE_SPEED, 48, 48, 5, 2, false);
+                    encoderDrive(DRIVE_SPEED, 18, 18, 5, 2, false);
+                } else {
+                    encoderDrive(DRIVE_SPEED, 36, 36, 5, 2, false);
+                }
+            } else {
+                if(moveTo == 1) {
+                    encoderDrive(DRIVE_SPEED, 48, 48, 5, 3, false);//was 36 before
+                    encoderDrive(DRIVE_SPEED, 18, 18, 5, 3, false);
+                } else {
+                    encoderDrive(DRIVE_SPEED, 36, 36, 5, 3, false);
+                }
+
+            }
+
 //            encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
 //            encoderDrive(DRIVE_SPEED, 18, 18, 5.0, 2);
 //            encoderDrive(DRIVE_SPEED, 24, 24, 5.0, 3);
@@ -205,7 +232,7 @@ public class CenterStage_Auto_goBuilda extends LinearOpMode{
     */
     public void encoderDrive(double speed,
                              double leftInches, double rightInches,
-                             double timeoutS, int FBLR) {
+                             double timeoutS, int FBLR, boolean color) {
         int newLeftTargetR;
         int newRightTargetR;
         int newLeftTargetF;
@@ -273,24 +300,32 @@ public class CenterStage_Auto_goBuilda extends LinearOpMode{
             while (opModeIsActive() &&
                     (runtime.seconds() < timeoutS) &&
                     (wheelsInMotion())) {
-                Color.RGBToHSV((int) (sensorColor.red() * SCALE_FACTOR),
-                        (int) (sensorColor.green() * SCALE_FACTOR),
-                        (int) (sensorColor.blue() * SCALE_FACTOR),
-                        hsvValues);
-                // Displays Data
-                telemetry.addData("Distance (cm)",
-                        String.format(Locale.US, "%.02f", sensorDistance.getDistance(DistanceUnit.CM)));
-                telemetry.addData("Red  ", sensorColor.red());
-                telemetry.addData("Blue ", sensorColor.blue());
-                telemetry.addData("Hue", hsvValues[0]);
+                if(color) {
+                    Color.RGBToHSV((int) (sensorColor.red() * SCALE_FACTOR),
+                            (int) (sensorColor.green() * SCALE_FACTOR),
+                            (int) (sensorColor.blue() * SCALE_FACTOR),
+                            hsvValues);
+                    // Displays Data
+                    telemetry.addData("Distance (cm)",
+                            String.format(Locale.US, "%.02f", sensorDistance.getDistance(DistanceUnit.CM)));
+                    telemetry.addData("Red  ", sensorColor.red());
+                    telemetry.addData("Blue ", sensorColor.blue());
+                    telemetry.addData("Hue", hsvValues[0]);
 
-                if ((sensorColor.red() >= redCutOff) || (sensorColor.blue() >= blueCutOff)){
-                    telemetry.addData("Color Found!", "STOP!");
-                    stopAllMotion();
-                    sleep(1000);
-                    pixel_claw.setPosition(0.8);
-                    pixel_sleeve.setPosition(0.0);
+                    if (sensorColor.red() >= redCutOff){
+                        telemetry.addData("Red Found!", "STOP!");
+                        stopAllMotion();
+                        isBlue = false;
+                        sleep(500);
+
+                    } else if (sensorColor.blue() >= blueCutOff) {
+                        telemetry.addData("Blue Found!", "STOP!");
+                        stopAllMotion();
+                        isBlue = true;
+                        sleep(500);
+                    }
                 }
+
 
                 // Display encoder information for the driver.
                 telemetry.addData("Running to",  " %7d :%7d :%7d :%7d:", newLeftTargetR,  newRightTargetR, newLeftTargetF, newRightTargetF);

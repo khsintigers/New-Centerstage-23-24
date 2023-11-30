@@ -24,6 +24,9 @@ public class CenterStage_Driver extends LinearOpMode{
     public DcMotor extend= null;
     public Servo pixel_claw = null;
     public Servo pixel_sleeve = null;
+    private double maxPower = 1;
+
+    public double speedFactor = 1.0;  // 100% speed
     BNO055IMU imu; //gyroscope
     TouchSensor touchLeft, touchRight;
     boolean touchedTriggered;
@@ -70,10 +73,10 @@ public class CenterStage_Driver extends LinearOpMode{
         left_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         right_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        left_front.setDirection(DcMotorSimple.Direction.REVERSE);
+        right_rear.setDirection(DcMotorSimple.Direction.REVERSE);
         left_rear.setDirection(DcMotorSimple.Direction.REVERSE);
+
         left_lift.setDirection(DcMotorSimple.Direction.REVERSE);
-        final double maxPower = 0.5;
         // set power to zero to avoid a FTC bug
         right_front.setPower(0);
         left_front.setPower(0);
@@ -91,11 +94,11 @@ public class CenterStage_Driver extends LinearOpMode{
 
             //swing motor
             if (gamepad2.left_trigger==1.0) {
-                swing_motor.setPower(0.2);
+                swing_motor.setPower(0.3);
             }
             else {
                 if (gamepad2.left_bumper) {
-                    swing_motor.setPower(-0.2);
+                    swing_motor.setPower(-0.3);
                 }
                 else {
                     swing_motor.setPower(0);
@@ -133,11 +136,51 @@ public class CenterStage_Driver extends LinearOpMode{
                 pixel_sleeve.setPosition(0.2); //close
             }
 
+            if(gamepad1.y) {
+                maxPower = 0.75;
+            } else if (gamepad1.b) {
+                maxPower = 0.50;
+            } else if (gamepad1.x) {
+                maxPower = 0.25;
+            } else if (gamepad1.a) {
+                maxPower = 0.1;
+            }
+/*
+            if (gamepad1.dpad_down) {
+                left_front.setPower(1 * speedFactor);
+                right_front.setPower(1 * speedFactor);
+                left_rear.setPower(1 * speedFactor);
+                right_rear.setPower(1 * speedFactor);
+            }
+            else {
+                if (gamepad1.dpad_down) {
+                    left_front.setPower(-1 * speedFactor);
+                    right_front.setPower(-1 * speedFactor);
+                    left_rear.setPower(-1 * speedFactor);
+                    right_rear.setPower(-1 * speedFactor);
+                }
+                else {
+                    left_front.setPower(0);
+                    right_front.setPower(0);
+                    left_rear.setPower(0);
+                    right_rear.setPower(0);
+                }
+            }
 
-
-
-
-
+            // adjust speed of driving motors
+            if (gamepad1.y) {
+                speedFactor = 1.0;
+            }
+            if (gamepad1.x) {
+                speedFactor = 0.75;
+            }
+            if (gamepad1.b) {
+                speedFactor = 0.5;
+            }
+            if (gamepad1.a) {
+                speedFactor = 0.25;
+            }
+*/
             telemetry.addData("lift: ","running" );
             telemetry.update();
 
@@ -150,7 +193,6 @@ public class CenterStage_Driver extends LinearOpMode{
 
 
     public void mechanum(){
-        final double maxPower = 1.0;   //0.5
 
         double joy1Y = gamepad1.left_stick_x;
         joy1Y = Math.abs(joy1Y) > 0.15 ? joy1Y*3/4: 0;

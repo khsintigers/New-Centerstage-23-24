@@ -11,9 +11,8 @@ import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name="DPadDrive", group="Linear Opmode")
-@Disabled
+//@Disabled
 public class DPadDrive extends LinearOpMode{
-
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor left_rear = null;
     private DcMotor right_rear = null;
@@ -71,9 +70,13 @@ public class DPadDrive extends LinearOpMode{
         left_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         right_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        left_front.setDirection(DcMotorSimple.Direction.REVERSE);
-        left_rear.setDirection(DcMotorSimple.Direction.REVERSE);
+        left_front.setDirection(DcMotorSimple.Direction.FORWARD);
+        left_rear.setDirection(DcMotorSimple.Direction.FORWARD);
+        right_rear.setDirection(DcMotorSimple.Direction.REVERSE);
+        right_front.setDirection(DcMotorSimple.Direction.REVERSE);
+
         left_lift.setDirection(DcMotorSimple.Direction.REVERSE);
+
         final double maxPower = 0.5;
         // set power to zero to avoid a FTC bug
         right_front.setPower(0);
