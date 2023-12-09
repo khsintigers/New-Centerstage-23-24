@@ -75,7 +75,7 @@ public class CenterStage_Auto_goBuilda extends LinearOpMode{
     }
 
     public void runOpMode() {
-        initVision();
+
         // Initialize the drive system variables.
         left_rear  = hardwareMap.get(DcMotor.class, "RearLeft");
         right_rear = hardwareMap.get(DcMotor.class, "RearRight");
@@ -124,6 +124,7 @@ public class CenterStage_Auto_goBuilda extends LinearOpMode{
 
         left_lift.setDirection(DcMotorSimple.Direction.REVERSE);
 
+        initVision();
         // Send telemetry message to indicate successful Encoder reset
         telemetry.addData("Starting at",  "%7d :%7d :%7d :%7d",
                 left_rear.getCurrentPosition(),
@@ -135,7 +136,6 @@ public class CenterStage_Auto_goBuilda extends LinearOpMode{
         telemetry.addData( "Left Avg: ",drawRectangleProcessor.getLeftAvg());
         telemetry.addData( "Middle Avg: ",drawRectangleProcessor.getMiddleAvg());
         telemetry.addData( "Right Avg: ",drawRectangleProcessor.getRightAvg());
-        telemetry.update();
         telemetry.update();
 
         // Wait for the game to start (driver presses PLAY)
@@ -174,18 +174,24 @@ public class CenterStage_Auto_goBuilda extends LinearOpMode{
             telemetry.addData("Success?:", moveTo);
             pixel_claw.setPosition(0.8);
             pixel_sleeve.setPosition(0.0);
-            encoderDrive(DRIVE_SPEED, 24, 24, 5, 1, false);
+            encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
+            sleep(1000);
+
             if(isBlue) {
+                encoderDrive(DRIVE_SPEED, 12, 12, 5, 2, false);
+                encoderDrive(DRIVE_SPEED, 8, 8, 5, 1, false);
                 if(moveTo == 3) {
-                    encoderDrive(DRIVE_SPEED, 48, 48, 5, 2, false);
-                    encoderDrive(DRIVE_SPEED, 18, 18, 5, 2, false);
+                    encoderDrive(DRIVE_SPEED * 2, 32, 32, 5, 2, false);
+//                    encoderDrive(DRIVE_SPEED * 2, 18, 18, 5, 2, false);
                 } else {
                     encoderDrive(DRIVE_SPEED, 36, 36, 5, 2, false);
                 }
             } else {
+                encoderDrive(DRIVE_SPEED, 12, 12, 5, 3, false);
+                encoderDrive(DRIVE_SPEED, 8, 8, 5, 1, false);
                 if(moveTo == 1) {
-                    encoderDrive(DRIVE_SPEED, 48, 48, 5, 3, false);//was 36 before
-                    encoderDrive(DRIVE_SPEED, 18, 18, 5, 3, false);
+                    encoderDrive(DRIVE_SPEED * 2, 32, 32, 5, 3, false);//was 36 before
+//                    encoderDrive(DRIVE_SPEED * 2, 18, 18, 5, 3, false);
                 } else {
                     encoderDrive(DRIVE_SPEED, 36, 36, 5, 3, false);
                 }

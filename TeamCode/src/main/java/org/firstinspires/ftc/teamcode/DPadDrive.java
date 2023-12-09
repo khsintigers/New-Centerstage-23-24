@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name="DPadDrive", group="Linear Opmode")
-//@Disabled
+@Disabled
 public class DPadDrive extends LinearOpMode{
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor left_rear = null;

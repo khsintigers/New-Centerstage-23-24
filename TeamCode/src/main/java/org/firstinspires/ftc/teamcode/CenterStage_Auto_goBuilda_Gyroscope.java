@@ -4,8 +4,8 @@ import android.app.Activity;
 import android.graphics.Color;
 import android.view.View;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -15,17 +15,23 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 import java.util.Locale;
 
 
 @Autonomous()
-@Disabled
-public class CenterStage_Auto_tetrix extends LinearOpMode{
+public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
 
     /* Declare OpMode members. */
+    BNO055IMU imu; //gyroscope
+    Orientation lastAngles = new Orientation();
+    double globalAngle, correction;
     private DcMotor left_front   = null;
     private DcMotor left_rear = null;
     private DcMotor right_front  = null;
@@ -36,12 +42,12 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
     public DcMotor extend= null;
     public Servo pixel_claw = null;
     public Servo pixel_sleeve = null;
-    static final double     COUNTS_PER_MOTOR_REV    = 1440 ;    // 1440 = tetrix motor, 537.7 = goBuilda
+    static final double     COUNTS_PER_MOTOR_REV    = 537.7 ;    // 1440 = tetrix motor, 537.7 = goBuilda
     static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // No External Gearing.
     static final double     WHEEL_DIAMETER_INCHES   = 3.9 ;     // For figuring circumference
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
-    static final double     DRIVE_SPEED             = 0.1;
+    static final double     DRIVE_SPEED             = 0.3;
     static final double     TURN_SPEED              = 0.5;
 
 
@@ -60,6 +66,7 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
     // sometimes it helps to multiply the raw RGB values with a scale factor
     // to amplify/attentuate the measured values.
     private final double SCALE_FACTOR = 255;
+    private boolean isBlue = true;
 
 
     public void initVision() {
@@ -75,7 +82,7 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
     }
 
     public void runOpMode() {
-        initVision();
+
         // Initialize the drive system variables.
         left_rear  = hardwareMap.get(DcMotor.class, "RearLeft");
         right_rear = hardwareMap.get(DcMotor.class, "RearRight");
@@ -101,36 +108,41 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        //left_rear.setDirection(DcMotor.Direction.REVERSE);
-        //right_rear.setDirection(DcMotor.Direction.FORWARD);
-        //left_front.setDirection(DcMotor.Direction.REVERSE);
-       // right_front.setDirection(DcMotor.Direction.FORWARD);
-
+        left_front.setDirection(DcMotorSimple.Direction.FORWARD);
         left_rear.setDirection(DcMotorSimple.Direction.FORWARD);
         right_rear.setDirection(DcMotorSimple.Direction.REVERSE);
-        left_front.setDirection(DcMotorSimple.Direction.FORWARD);
         right_front.setDirection(DcMotorSimple.Direction.REVERSE);
-
 
         left_rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         right_rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         left_front.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         right_front.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+
+        left_rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        right_rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        left_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        right_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         left_lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         right_lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         left_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         right_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-//        left_rear.setDirection(DcMotorSimple.Direction.REVERSE);
         left_lift.setDirection(DcMotorSimple.Direction.REVERSE);
 
+        initVision();
         // Send telemetry message to indicate successful Encoder reset
         telemetry.addData("Starting at",  "%7d :%7d :%7d :%7d",
                 left_rear.getCurrentPosition(),
                 right_rear.getCurrentPosition(),
                 left_front.getCurrentPosition(),
                 right_front.getCurrentPosition());
+        sleep(3000);
+        telemetry.addData("Identified", drawRectangleProcessor.getSelection());
+        telemetry.addData( "Left Avg: ",drawRectangleProcessor.getLeftAvg());
+        telemetry.addData( "Middle Avg: ",drawRectangleProcessor.getMiddleAvg());
+        telemetry.addData( "Right Avg: ",drawRectangleProcessor.getRightAvg());
         telemetry.update();
 
         // Wait for the game to start (driver presses PLAY)
@@ -155,25 +167,52 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
                     moveTo = 3;
                 }
             }
-            encoderDrive(DRIVE_SPEED,  36,  36, 5, 0, true); // move forward
+            encoderDrive(DRIVE_SPEED,  32,  32, 5,0, false); // move forward
             if(moveTo == 1) {
-                encoderDrive(DRIVE_SPEED, 18, 18, 5, 3, true); // move right
+                encoderDrive(DRIVE_SPEED -.2, 18, 18, 5, 3, true); // move right
             } else if(moveTo == 2) {
-                encoderDrive(DRIVE_SPEED,  36,  36, 5, 0, true); // move forward
+                encoderDrive(DRIVE_SPEED-.2,  36,  36, 5, 0, true); // move forward
             } else if (moveTo == 3) {
-                encoderDrive(DRIVE_SPEED,  36,  36, 5, 2, true); // move left
+                encoderDrive(DRIVE_SPEED -.2,  36,  36, 5, 2, true); // move left
             } else {
-                encoderDrive(DRIVE_SPEED,  36,  36, 5, 0, true); // move forward
+                encoderDrive(DRIVE_SPEED-.2,  36,  36, 5, 0, true); // move forward
             }
             encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
             telemetry.addData("Success?:", moveTo);
             pixel_claw.setPosition(0.8);
             pixel_sleeve.setPosition(0.0);
             encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
+            sleep(1000);
+
+            if(isBlue) {
+                encoderDrive(DRIVE_SPEED, 12, 12, 5, 2, false);
+                encoderDrive(DRIVE_SPEED, 8, 8, 5, 1, false);
+                if(moveTo == 3) {
+                    encoderDrive(DRIVE_SPEED * 2, 32, 32, 5, 2, false);
+//                    encoderDrive(DRIVE_SPEED * 2, 18, 18, 5, 2, false);
+                } else {
+                    encoderDrive(DRIVE_SPEED, 36, 36, 5, 2, false);
+                }
+            } else {
+                encoderDrive(DRIVE_SPEED, 12, 12, 5, 3, false);
+                encoderDrive(DRIVE_SPEED, 8, 8, 5, 1, false);
+                if(moveTo == 1) {
+                    encoderDrive(DRIVE_SPEED * 2, 32, 32, 5, 3, false);//was 36 before
+//                    encoderDrive(DRIVE_SPEED * 2, 18, 18, 5, 3, false);
+                } else {
+                    encoderDrive(DRIVE_SPEED, 36, 36, 5, 3, false);
+                }
+
+            }
+            encoderDrive(DRIVE_SPEED, 18, -18, 5, 0, true);
+            encoderDrive(DRIVE_SPEED - .2,-24,-24,5,3,true);
+            encoderDrive(DRIVE_SPEED - .2,-3,-3,5,1,true);
 //            encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
 //            encoderDrive(DRIVE_SPEED, 18, 18, 5.0, 2);
 //            encoderDrive(DRIVE_SPEED, 24, 24, 5.0, 3);
 //            encoderDrive(DRIVE_SPEED,  24,  24, 5.0, 1);
+
+
 
 
 //        encoderDrive(TURN_SPEED,   12, -12, 4.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
@@ -290,11 +329,18 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
                     telemetry.addData("Blue ", sensorColor.blue());
                     telemetry.addData("Hue", hsvValues[0]);
 
-                    if ((sensorColor.red() >= redCutOff) || (sensorColor.blue() >= blueCutOff)){
-                        telemetry.addData("Color Found!", "STOP!");
+                    if (sensorColor.red() >= redCutOff){
+                        telemetry.addData("Red Found!", "STOP!");
                         stopAllMotion();
-                        sleep(1000);
+                        isBlue = false;
+                        sleep(500);
 
+
+                    } else if (sensorColor.blue() >= blueCutOff) {
+                        telemetry.addData("Blue Found!", "STOP!");
+                        stopAllMotion();
+                        isBlue = true;
+                        sleep(500);
                     }
                 }
 
@@ -308,8 +354,7 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
 
             // Stop all motion;
             stopAllMotion();
-            sleep(100);
-            pixel_claw.setPosition(0.8);
+
             // Turn off RUN_TO_POSITION
             left_rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             right_rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -321,6 +366,7 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
 
 
     }
+
     public void stopAllMotion() {
         left_rear.setPower(0);
         right_rear.setPower(0);
@@ -331,5 +377,70 @@ public class CenterStage_Auto_tetrix extends LinearOpMode{
         return left_rear.isBusy() && right_rear.isBusy() && left_front.isBusy() && right_front.isBusy();
     }
 
+    private void resetAngle() {
+        lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        globalAngle = 0;
+    }
 
+    // Get current cumulative angle rotation from last reset.
+    // @return Angle in degrees. + = left, - = right.
+    private double getAngle() {
+        // We experimentally determined the Z axis is the axis we want to use for heading angle.
+        // We have to process the angle because the imu works in euler angles so the Z axis is
+        // returned as 0 to +180 or 0 to -180 rolling back to -179 or +179 when rotation passes
+        // 180 degrees. We detect this transition and track the total cumulative angle of rotation.
+
+        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
+        if (deltaAngle < -180)
+            deltaAngle += 360;
+        else if (deltaAngle > 180)
+            deltaAngle -= 360;
+
+        globalAngle += deltaAngle;
+        lastAngles = angles;
+
+        return globalAngle;
+    }
+
+    // See if we are moving in a straight line and if not return a power correction value.
+    // @return Power adjustment, + is adjust left - is adjust right.
+    private double checkDirection() {
+        // The gain value determines how sensitive the correction is to direction changes.
+        // You will have to experiment with your robot to get small smooth direction changes
+        // to stay on a straight line.
+        double correction, angle, gain = .10;
+
+        angle = getAngle();
+
+        if (angle == 0)
+            correction = 0;             // no adjustment.
+        else
+            correction = -angle;        // reverse sign of angle for correction.
+
+        correction = correction * gain;
+
+        return correction;
+    }
+
+    public void turnAngle(double angle, int tolerance, double motorPower) {
+        //tolerance: how much angle can be off by
+        //motorPower: how fast to turn
+        int direction = 1; //+ is clockwise turning
+
+        resetAngle();
+        if (angle > 0) {
+            direction = -1;
+        }
+        while ((Math.abs(angle) - Math.abs(getAngle()) > tolerance)) {
+            left_front.setPower(motorPower * direction);
+            right_front.setPower(-1 * motorPower * direction);
+            left_rear.setPower(motorPower * direction);
+            right_rear.setPower(-1 * motorPower * direction);
+
+            telemetry.addData("Wanted Angle", angle);
+            telemetry.addData("Curr Angle", getAngle());
+            telemetry.update();
+        }
+    }
 }

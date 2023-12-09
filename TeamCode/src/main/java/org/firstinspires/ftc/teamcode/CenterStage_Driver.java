@@ -94,11 +94,13 @@ public class CenterStage_Driver extends LinearOpMode{
 
             //swing motor
             if (gamepad2.left_trigger==1.0) {
-                swing_motor.setPower(0.3);
+                swing_motor.setPower(-0.3);
+                pixel_claw.setPosition(1);
             }
             else {
                 if (gamepad2.left_bumper) {
-                    swing_motor.setPower(-0.3);
+                    swing_motor.setPower(0.3);
+
                 }
                 else {
                     swing_motor.setPower(0);
@@ -123,26 +125,26 @@ public class CenterStage_Driver extends LinearOpMode{
 
 
             if (gamepad2.x) {
-                pixel_claw.setPosition(0.8); //open
+                pixel_claw.setPosition(0.73); //open
             }
             if (gamepad2.b) {
-                pixel_claw.setPosition(1); //close
+                pixel_sleeve.setPosition(0.0); //open
             }
 
             if (gamepad2.y) {
-                pixel_sleeve.setPosition(0.0); //open
+                pixel_claw.setPosition(1); //close
             }
             if (gamepad2.a) {
                 pixel_sleeve.setPosition(0.2); //close
             }
 
-            if(gamepad1.y) {
+            if(gamepad1.right_trigger == 1.0) {
                 maxPower = 0.75;
-            } else if (gamepad1.b) {
+            } else if (gamepad1.right_bumper) {
                 maxPower = 0.50;
-            } else if (gamepad1.x) {
+            } else if (gamepad1.left_bumper) {
                 maxPower = 0.25;
-            } else if (gamepad1.a) {
+            } else if (gamepad1.left_trigger == 1.0) {
                 maxPower = 0.1;
             }
 /*

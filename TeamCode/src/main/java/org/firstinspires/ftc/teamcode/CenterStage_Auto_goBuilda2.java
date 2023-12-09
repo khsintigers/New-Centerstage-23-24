@@ -173,23 +173,9 @@ public class CenterStage_Auto_goBuilda2 extends LinearOpMode{
             telemetry.addData("Success?:", moveTo);
             pixel_claw.setPosition(0.8);
             pixel_sleeve.setPosition(0.0);
-            encoderDrive(DRIVE_SPEED, 24, 24, 5, 1, false);
-            if(isBlue) {
-                if(moveTo == 3) {
-                    encoderDrive(DRIVE_SPEED, 48, 48, 5, 2, false);
-                    encoderDrive(DRIVE_SPEED, 18, 18, 5, 2, false);
-                } else {
-                    encoderDrive(DRIVE_SPEED, 36, 36, 5, 2, false);
-                }
-            } else {
-                if(moveTo == 1) {
-                    encoderDrive(DRIVE_SPEED, 48, 48, 5, 3, false);//was 36 before
-                    encoderDrive(DRIVE_SPEED, 18, 18, 5, 3, false);
-                } else {
-                    encoderDrive(DRIVE_SPEED, 36, 36, 5, 3, false);
-                }
+            encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
+            stopAllMotion();
 
-            }
 
 //            encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
 //            encoderDrive(DRIVE_SPEED, 18, 18, 5.0, 2);

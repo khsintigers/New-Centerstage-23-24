@@ -47,7 +47,7 @@ import java.util.Locale;
 
 
 @Autonomous(name="PixelAutoTest", group="PixelAutoTest")
-//@Disabled
+@Disabled
 
 public class PixelAutoTest extends LinearOpMode {
 
