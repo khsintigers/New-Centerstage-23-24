@@ -42,6 +42,7 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
     public DcMotor extend= null;
     public Servo pixel_claw = null;
     public Servo pixel_sleeve = null;
+
     static final double     COUNTS_PER_MOTOR_REV    = 537.7 ;    // 1440 = tetrix motor, 537.7 = goBuilda
     static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // No External Gearing.
     static final double     WHEEL_DIAMETER_INCHES   = 3.9 ;     // For figuring circumference
@@ -49,6 +50,15 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
             (WHEEL_DIAMETER_INCHES * 3.1415);
     static final double     DRIVE_SPEED             = 0.3;
     static final double     TURN_SPEED              = 0.5;
+
+    static final double     HEADING_THRESHOLD       = 1.0 ;    // How close must the heading get to the target before moving to next step.
+    // Requiring more accuracy (a smaller number) will often make the turn take longer to get into the final position.
+    // Define the Proportional control coefficient (or GAIN) for "heading control".
+    // We define one value when Turning (larger errors), and the other is used when Driving straight (smaller errors).
+    // Increase these numbers if the heading does not corrects strongly enough (eg: a heavy robot or using tracks)
+    // Decrease these numbers if the heading does not settle on the correct value (eg: very agile robot with omni wheels)
+    static final double     P_TURN_GAIN            = 0.02;     // Larger is more responsive, but also less stable
+    static final double     P_DRIVE_GAIN           = 0.03;     // Larger is more responsive, but also less stable
 
 
     private ElapsedTime     runtime = new ElapsedTime();
@@ -98,8 +108,6 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
         // get a reference to the distance sensor that shares the same name.
         sensorDistance = hardwareMap.get(DistanceSensor.class, "Sensor Color");
 
-
-
         // get a reference to the RelativeLayout so we can change the background
         // color of the Robot Controller app to match the hue detected by the RGB sensor.
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
@@ -126,28 +134,48 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
         left_lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         right_lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        leftRearDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightRearDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         left_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         right_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         left_lift.setDirection(DcMotorSimple.Direction.REVERSE);
 
+        // init Gyro
+        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
+        RevHubOrientationOnRobot.UsbFacingDirection  usbDirection  = RevHubOrientationOnRobot.UsbFacingDirection.UP;
+
+        RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
+
+        // Now initialize the IMU with this mounting orientation
+        // This sample expects the IMU to be in a REV Hub and named "imu".
+        imu = hardwareMap.get(IMU.class, "imu");
+        imu.initialize(new IMU.Parameters(orientationOnRobot));
+
         initVision();
         // Send telemetry message to indicate successful Encoder reset
-        telemetry.addData("Starting at",  "%7d :%7d :%7d :%7d",
+        while(opModeInInit()) {
+            telemetry.addData("Starting at",  "%7d :%7d :%7d :%7d",
                 left_rear.getCurrentPosition(),
                 right_rear.getCurrentPosition(),
                 left_front.getCurrentPosition(),
                 right_front.getCurrentPosition());
-        sleep(3000);
-        telemetry.addData("Identified", drawRectangleProcessor.getSelection());
-        telemetry.addData( "Left Avg: ",drawRectangleProcessor.getLeftAvg());
-        telemetry.addData( "Middle Avg: ",drawRectangleProcessor.getMiddleAvg());
-        telemetry.addData( "Right Avg: ",drawRectangleProcessor.getRightAvg());
-        telemetry.update();
+            telemetry.addData("Identified", drawRectangleProcessor.getSelection());
+            telemetry.addData( "Left Avg: ",drawRectangleProcessor.getLeftAvg());
+            telemetry.addData( "Middle Avg: ",drawRectangleProcessor.getMiddleAvg());
+            telemetry.addData( "Right Avg: ",drawRectangleProcessor.getRightAvg());
+            telemetry.update;
+        }
+
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         if(opModeIsActive()) {
+
+            imu.resetYaw();
+
             // Step through each leg of the path,
             // Note: Reverse movement is obtained by setting a negative distance (not speed)
             double leftAvg = drawRectangleProcessor.getLeftAvg();
@@ -366,6 +394,128 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
 
 
     }
+    public void encoderDriveWithGyro(double speed,
+                                     double leftInches, double rightInches,
+                                     double timeoutS, int FBLR, boolean color) {
+        nt newLeftTargetR;
+        int newRightTargetR;
+        int newLeftTargetF;
+        int newRightTargetF;
+        double offsetLRPerc = 1.154;
+        // Ensure that the OpMode is still active
+        if (opModeIsActive()) {
+
+            // Determine new target position, and pass to motor controller
+            if (FBLR == 0) {
+                newLeftTargetR = left_rear.getCurrentPosition() + (int) (leftInches * COUNTS_PER_INCH);
+                newRightTargetR = right_rear.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);
+                newLeftTargetF = left_front.getCurrentPosition() + (int) (leftInches * COUNTS_PER_INCH);
+                newRightTargetF = right_front.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);
+            } else if (FBLR == 1) {
+                newLeftTargetR = left_rear.getCurrentPosition() + (int) (-leftInches * COUNTS_PER_INCH);
+                newRightTargetR = right_rear.getCurrentPosition() + (int) (-rightInches * COUNTS_PER_INCH);
+                newLeftTargetF = left_front.getCurrentPosition() + (int) (-leftInches * COUNTS_PER_INCH);
+                newRightTargetF = right_front.getCurrentPosition() + (int) (-rightInches * COUNTS_PER_INCH);
+            } else if (FBLR == 2) {
+                newLeftTargetR = left_rear.getCurrentPosition() + (int) (leftInches * offsetLRPerc * COUNTS_PER_INCH);
+                newRightTargetR = right_rear.getCurrentPosition() + (int) (-rightInches * offsetLRPerc * COUNTS_PER_INCH);
+                newLeftTargetF = left_front.getCurrentPosition() + (int) (-leftInches * offsetLRPerc * COUNTS_PER_INCH);
+                newRightTargetF = right_front.getCurrentPosition() + (int) (rightInches * offsetLRPerc * COUNTS_PER_INCH);
+            } else if (FBLR == 3) {
+                newLeftTargetR = left_rear.getCurrentPosition() + (int) (-leftInches * offsetLRPerc * COUNTS_PER_INCH);
+                newRightTargetR = right_rear.getCurrentPosition() + (int) (rightInches * offsetLRPerc * COUNTS_PER_INCH);
+                newLeftTargetF = left_front.getCurrentPosition() + (int) (leftInches * offsetLRPerc * COUNTS_PER_INCH);
+                newRightTargetF = right_front.getCurrentPosition() + (int) (-rightInches * offsetLRPerc * COUNTS_PER_INCH);
+            } else {
+                newLeftTargetR = left_rear.getCurrentPosition() + (int) (leftInches * COUNTS_PER_INCH);
+                newRightTargetR = right_rear.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);
+                newLeftTargetF = left_front.getCurrentPosition() + (int) (leftInches * COUNTS_PER_INCH);
+                newRightTargetF = right_front.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);
+            }
+
+
+            left_rear.setTargetPosition(newLeftTargetR);
+            right_rear.setTargetPosition(newRightTargetR);
+            left_front.setTargetPosition(newLeftTargetF);
+            right_front.setTargetPosition(newRightTargetF);
+
+            // Turn On RUN_TO_POSITION
+            left_rear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            right_rear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            left_front.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            right_front.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
+            // reset the timeout time and start motion.
+            runtime.reset();
+            moveRobot(maxDriveSpeed, 0);
+
+
+            // keep looping while we are still active, and there is time left, and both motors are running.
+            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
+            // its target position, the motion will stop.  This is "safer" in the event that the robot will
+            // always end the motion as soon as possible.
+            // However, if you require that BOTH motors have finished their moves before the robot continues
+            // onto the next step, use (isBusy() || isBusy()) in the loop test.
+            int redCutOff = 90;
+            int blueCutOff = 120;
+            while (opModeIsActive() &&
+                    (runtime.seconds() < timeoutS) &&
+                    (wheelsInMotion())) {
+                if (color) {
+                    Color.RGBToHSV((int) (sensorColor.red() * SCALE_FACTOR),
+                            (int) (sensorColor.green() * SCALE_FACTOR),
+                            (int) (sensorColor.blue() * SCALE_FACTOR),
+                            hsvValues);
+                    // Displays Data
+                    telemetry.addData("Distance (cm)",
+                            String.format(Locale.US, "%.02f", sensorDistance.getDistance(DistanceUnit.CM)));
+                    telemetry.addData("Red  ", sensorColor.red());
+                    telemetry.addData("Blue ", sensorColor.blue());
+                    telemetry.addData("Hue", hsvValues[0]);
+
+                    if (sensorColor.red() >= redCutOff) {
+                        telemetry.addData("Red Found!", "STOP!");
+                        stopAllMotion();
+                        isBlue = false;
+                        sleep(500);
+
+
+                    } else if (sensorColor.blue() >= blueCutOff) {
+                        telemetry.addData("Blue Found!", "STOP!");
+                        stopAllMotion();
+                        isBlue = true;
+                        sleep(500);
+                    }
+                }
+
+                turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN);
+
+                // if driving in reverse, the motor correction also needs to be reversed
+                if (distance < 0)
+                    turnSpeed *= -1.0;
+
+                moveRobot(speed, turnSpeed);
+
+                // Display encoder information for the driver.
+                telemetry.addData("Running to", " %7d :%7d :%7d :%7d:", newLeftTargetR, newRightTargetR, newLeftTargetF, newRightTargetF);
+                telemetry.addData("Currently at", " at  %7d :%7d :%7d :%7d:",
+                        left_rear.getCurrentPosition(), right_rear.getCurrentPosition(), left_front.getCurrentPosition(), right_front.getCurrentPosition());
+                telemetry.update();
+            }
+
+            // Stop all motion;
+            stopAllMotion();
+
+            // Turn off RUN_TO_POSITION
+            left_rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            right_rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            left_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            right_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            sleep(250);   // optional pause after each move.
+        }
+    }
 
     public void stopAllMotion() {
         left_rear.setPower(0);
@@ -403,6 +553,27 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
         return globalAngle;
     }
 
+    public void moveRobot(double drive, double turn) {
+        driveSpeed = drive;     // save this value as a class member so it can be used by telemetry.
+        turnSpeed  = turn;      // save this value as a class member so it can be used by telemetry.
+
+        leftSpeed  = drive - turn;
+        rightSpeed = drive + turn;
+
+        // Scale speeds down if either one exceeds +/- 1.0;
+        double max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
+        if (max > 1.0)
+        {
+            leftSpeed /= max;
+            rightSpeed /= max;
+        }
+
+        leftRearDrive.setPower(leftSpeed);
+        rightRearDrive.setPower(rightSpeed);
+        leftFrontDrive.setPower(leftSpeed);
+        rightFrontDrive.setPower(rightSpeed);
+    }
+
     // See if we are moving in a straight line and if not return a power correction value.
     // @return Power adjustment, + is adjust left - is adjust right.
     private double checkDirection() {
@@ -421,6 +592,75 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
         correction = correction * gain;
 
         return correction;
+    }
+
+    public void turnToHeading(double maxTurnSpeed, double heading) {
+
+        // Run getSteeringCorrection() once to pre-calculate the current error
+        getSteeringCorrection(heading, P_DRIVE_GAIN);
+
+        // keep looping while we are still active, and not on heading.
+        while (opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD)) {
+
+            // Determine required steering to keep on heading
+            turnSpeed = getSteeringCorrection(heading, P_TURN_GAIN);
+
+            // Clip the speed to the maximum permitted value.
+            turnSpeed = Range.clip(turnSpeed, -maxTurnSpeed, maxTurnSpeed);
+
+            // Pivot in place by applying the turning correction
+            moveRobot(0, turnSpeed);
+
+            // Display drive status for the driver.
+            sendTelemetry(false);
+        }
+
+        // Stop all motion;
+        moveRobot(0, 0);
+    }
+    public void holdHeading(double maxTurnSpeed, double heading, double holdTime) {
+
+        ElapsedTime holdTimer = new ElapsedTime();
+        holdTimer.reset();
+
+        // keep looping while we have time remaining.
+        while (opModeIsActive() && (holdTimer.time() < holdTime)) {
+            // Determine required steering to keep on heading
+            turnSpeed = getSteeringCorrection(heading, P_TURN_GAIN);
+
+            // Clip the speed to the maximum permitted value.
+            turnSpeed = Range.clip(turnSpeed, -maxTurnSpeed, maxTurnSpeed);
+
+            // Pivot in place by applying the turning correction
+            moveRobot(0, turnSpeed);
+
+            // Display drive status for the driver.
+            sendTelemetry(false);
+        }
+
+        // Stop all motion;
+        moveRobot(0, 0);
+    }
+
+    /**
+     * Use a Proportional Controller to determine how much steering correction is required.
+     *
+     * @param desiredHeading        The desired absolute heading (relative to last heading reset)
+     * @param proportionalGain      Gain factor applied to heading error to obtain turning power.
+     * @return                      Turning power needed to get to required heading.
+     */
+    public double getSteeringCorrection(double desiredHeading, double proportionalGain) {
+        targetHeading = desiredHeading;  // Save for telemetry
+
+        // Determine the heading current error
+        headingError = targetHeading - getHeading();
+
+        // Normalize the error to be within +/- 180 degrees
+        while (headingError > 180)  headingError -= 360;
+        while (headingError <= -180) headingError += 360;
+
+        // Multiply the error by the gain to determine the required steering correction/  Limit the result to +/- 1.0
+        return Range.clip(headingError * proportionalGain, -1, 1);
     }
 
     public void turnAngle(double angle, int tolerance, double motorPower) {
