@@ -42,6 +42,8 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
     public DcMotor extend= null;
     public Servo pixel_claw = null;
     public Servo pixel_sleeve = null;
+    public Servo left_gate = null;
+    public Servo right_gate = null;
     static final double     COUNTS_PER_MOTOR_REV    = 537.7 ;    // 1440 = tetrix motor, 537.7 = goBuilda
     static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // No External Gearing.
     static final double     WHEEL_DIAMETER_INCHES   = 3.9 ;     // For figuring circumference
@@ -92,8 +94,10 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
         swing_motor  = hardwareMap.get(DcMotor.class, "SwingMotor");
         left_lift  = hardwareMap.get(DcMotor.class, "LeftLift");
         right_lift  = hardwareMap.get(DcMotor.class, "RightLift");
-        pixel_claw= hardwareMap.get(Servo.class, "PixelClaw");
-        pixel_sleeve= hardwareMap.get(Servo.class, "PixelSleeve");
+        //pixel_claw= hardwareMap.get(Servo.class, "PixelClaw");
+        //pixel_sleeve= hardwareMap.get(Servo.class, "PixelSleeve");
+        left_gate = hardwareMap.get(Servo.class, "LeftGate");
+        right_gate = hardwareMap.get(Servo.class, "RightGate");
 
         // get a reference to the distance sensor that shares the same name.
         sensorDistance = hardwareMap.get(DistanceSensor.class, "Sensor Color");
@@ -150,6 +154,8 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
         if(opModeIsActive()) {
             // Step through each leg of the path,
             // Note: Reverse movement is obtained by setting a negative distance (not speed)
+            left_gate.setPosition(0.7);
+            right_gate.setPosition(0);
             double leftAvg = drawRectangleProcessor.getLeftAvg();
             double middleAvg = drawRectangleProcessor.getMiddleAvg();
             double rightAvg = drawRectangleProcessor.getRightAvg();
@@ -179,8 +185,10 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
             }
             encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
             telemetry.addData("Success?:", moveTo);
-            pixel_claw.setPosition(0.8);
-            pixel_sleeve.setPosition(0.0);
+            //pixel_claw.setPosition(0.8);
+            //pixel_sleeve.setPosition(0.0);
+            left_gate.setPosition(0.5);
+            right_gate.setPosition(0.3);
             encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
             sleep(1000);
 
