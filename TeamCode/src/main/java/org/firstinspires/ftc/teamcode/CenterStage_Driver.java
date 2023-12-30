@@ -76,8 +76,12 @@ public class CenterStage_Driver extends LinearOpMode{
         left_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         right_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        right_rear.setDirection(DcMotorSimple.Direction.REVERSE);
+//        right_rear.setDirection(DcMotorSimple.Direction.REVERSE);
+//        left_front.setDirection(DcMotorSimple.Direction.REVERSE);
+        left_front.setDirection(DcMotorSimple.Direction.REVERSE);
         left_rear.setDirection(DcMotorSimple.Direction.REVERSE);
+        right_rear.setDirection(DcMotorSimple.Direction.FORWARD);
+        right_front.setDirection(DcMotorSimple.Direction.FORWARD);
 
         left_lift.setDirection(DcMotorSimple.Direction.REVERSE);
         // set power to zero to avoid a FTC bug

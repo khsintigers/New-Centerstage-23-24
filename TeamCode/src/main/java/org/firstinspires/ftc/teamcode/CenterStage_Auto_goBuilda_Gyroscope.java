@@ -40,7 +40,8 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
     private DcMotor left_lift  = null;
     private DcMotor right_lift  = null;
     public DcMotor extend= null;
-    public Servo pixel_claw = null;
+    public Servo left_gate = null;
+    public Servo right_gate = null;
     public Servo pixel_sleeve = null;
     public Servo left_gate = null;
     public Servo right_gate = null;
@@ -112,10 +113,10 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        left_front.setDirection(DcMotorSimple.Direction.FORWARD);
-        left_rear.setDirection(DcMotorSimple.Direction.FORWARD);
-        right_rear.setDirection(DcMotorSimple.Direction.REVERSE);
-        right_front.setDirection(DcMotorSimple.Direction.REVERSE);
+        left_front.setDirection(DcMotorSimple.Direction.REVERSE);
+        left_rear.setDirection(DcMotorSimple.Direction.REVERSE);
+        right_rear.setDirection(DcMotorSimple.Direction.FORWARD);
+        right_front.setDirection(DcMotorSimple.Direction.FORWARD);
 
         left_rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         right_rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -177,20 +178,22 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
             if(moveTo == 1) {
                 encoderDrive(DRIVE_SPEED -.2, 18, 18, 5, 3, true); // move right
             } else if(moveTo == 2) {
+//                middle();
                 encoderDrive(DRIVE_SPEED-.2,  36,  36, 5, 0, true); // move forward
             } else if (moveTo == 3) {
                 encoderDrive(DRIVE_SPEED -.2,  36,  36, 5, 2, true); // move left
             } else {
-                encoderDrive(DRIVE_SPEED-.2,  36,  36, 5, 0, true); // move forward
+                encoderDrive(DRIVE_SPEED-.2,  36,  36, 5, 0, true);
             }
             encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
             telemetry.addData("Success?:", moveTo);
+
             //pixel_claw.setPosition(0.8);
             //pixel_sleeve.setPosition(0.0);
             left_gate.setPosition(0.5);
             right_gate.setPosition(0.3);
+
             encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
-            sleep(1000);
 
             if(isBlue) { // cases when blue
                 encoderDrive(DRIVE_SPEED, 12, 12, 5, 2, false);
@@ -239,6 +242,7 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
                      movemiddle(2);
                  }
             }
+
             //encoderDrive(DRIVE_SPEED, 18, -18, 5, 0, true);
             //encoderDrive(DRIVE_SPEED - .2,-24,-24,5,3,true);
             //encoderDrive(DRIVE_SPEED - .2,-3,-3,5,1,true);
@@ -246,6 +250,7 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
 //            encoderDrive(DRIVE_SPEED, 18, 18, 5.0, 2);
 //            encoderDrive(DRIVE_SPEED, 24, 24, 5.0, 3);
 //            encoderDrive(DRIVE_SPEED,  24,  24, 5.0, 1);
+
 
 
 
@@ -259,14 +264,7 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
 
         sleep(1000);  // pause to display final telemetry message.
     }
-//    @Override
-//    public void init_loop() {
-//    }
 
-//    @Override
-//    public void start() {
-//        //visionPortal.stopStreaming();
-//    }
 
     /*
     Add back in later, figure out how to thread loops
@@ -347,7 +345,7 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
             // always end the motion as soon as possible.
             // However, if you require that BOTH motors have finished their moves before the robot continues
             // onto the next step, use (isBusy() || isBusy()) in the loop test.
-            int redCutOff = 90;
+            int redCutOff = 110;
             int blueCutOff = 120;
             while (opModeIsActive() &&
                     (runtime.seconds() < timeoutS) &&
@@ -366,16 +364,20 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
 
                     if (sensorColor.red() >= redCutOff){
                         telemetry.addData("Red Found!", "STOP!");
+                        telemetry.update();
                         stopAllMotion();
                         isBlue = false;
-                        sleep(500);
+                        sleep(5000);
+//                        break;
 
 
                     } else if (sensorColor.blue() >= blueCutOff) {
                         telemetry.addData("Blue Found!", "STOP!");
+                        telemetry.update();
                         stopAllMotion();
                         isBlue = true;
-                        sleep(500);
+                        sleep(5000);
+//                        break;
                     }
                 }
 
@@ -396,7 +398,7 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
             left_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             right_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-            sleep(250);   // optional pause after each move.
+            sleep(1000);   // optional pause after each move.
         }
 
 
@@ -518,4 +520,82 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
             telemetry.update();
         }
     }
+    private void middle() {
+        encoderDrive(DRIVE_SPEED, 32, 32, 5, 0, false);
+        encoderDrive(DRIVE_SPEED/3, 12, 12, 5, 0, true);
+        // drop pixel
+        encoderDrive(DRIVE_SPEED, 32, 32, 5, 1, false);
+
+    }
+    private void left() {
+        encoderDrive(DRIVE_SPEED, 32, 32, 5, 0, false);
+        turn_90_left(DRIVE_SPEED);
+        encoderDrive(DRIVE_SPEED/3, 12, 12, 5, 0, true);
+        // drop pixel
+        encoderDrive(DRIVE_SPEED/3, 6, 6, 5, 1, false);
+        turn_90_right(DRIVE_SPEED);
+        encoderDrive(DRIVE_SPEED, 32, 32, 5, 1, false);
+    }
+    private void right() {
+        encoderDrive(DRIVE_SPEED, 32, 32, 5, 0, false);
+        turn_90_right(DRIVE_SPEED);
+        encoderDrive(DRIVE_SPEED/3, 12, 12, 5, 0, true);
+        // drop pixel
+        encoderDrive(DRIVE_SPEED/3, 6, 6, 5, 1, false);
+        turn_90_left(DRIVE_SPEED);
+        encoderDrive(DRIVE_SPEED, 32, 32, 5, 1, false);
+    }
+
+
+    private void blue_right() { // these are all from view of the coach
+        turn_90_right(DRIVE_SPEED);
+        encoderDrive(DRIVE_SPEED, 18, 18, 5, 0, false);
+        encoderDrive(DRIVE_SPEED/3, 18, 18, 5, 2, false);
+
+    }
+    private void blue_middle() {
+        turn_90_right(DRIVE_SPEED);
+        encoderDrive(DRIVE_SPEED, 24, 24, 5, 0, false);
+        encoderDrive(DRIVE_SPEED/3, 18, 18, 5, 2, false);
+    }
+    private void blue_left() {
+        turn_90_right(DRIVE_SPEED);
+        encoderDrive(DRIVE_SPEED, 24, 24, 5, 0, false);
+        encoderDrive(DRIVE_SPEED/3, 18, 18, 5, 2, false);
+    }
+    private void red_right() {
+        turn_90_left(DRIVE_SPEED);
+        encoderDrive(DRIVE_SPEED, 24, 24, 5, 0, false);
+        encoderDrive(DRIVE_SPEED/3, 30, 30, 5, 3, false);
+    }
+    private void red_middle() {
+        turn_90_left(DRIVE_SPEED);
+        encoderDrive(DRIVE_SPEED, 24, 24, 5, 0, false);
+        encoderDrive(DRIVE_SPEED/3, 24, 24, 5, 3, false);
+        // move forward and place pixel
+
+    }
+    private void red_left() {
+        turn_90_left(DRIVE_SPEED);
+        encoderDrive(DRIVE_SPEED, 24, 24, 5, 0, false);
+        encoderDrive(DRIVE_SPEED/3, 18, 18, 5, 3, false);
+        // move forward and place pixel (Make method)
+
+    }
+
+    public void placePixel() {
+        return;
+    }
+
+    public void turn_90_right(double speed) {
+        encoderDrive(speed, 18, -18, 5,0, false);
+    }
+    public void turn_90_left(double speed) {
+        encoderDrive(speed, -18, 18, 5, 0, false);
+    }
+
+
+
+
+
 }
