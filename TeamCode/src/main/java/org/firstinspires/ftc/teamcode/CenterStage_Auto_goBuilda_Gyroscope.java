@@ -43,6 +43,8 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
     public Servo left_gate = null;
     public Servo right_gate = null;
     public Servo pixel_sleeve = null;
+    public Servo left_gate = null;
+    public Servo right_gate = null;
     static final double     COUNTS_PER_MOTOR_REV    = 537.7 ;    // 1440 = tetrix motor, 537.7 = goBuilda
     static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // No External Gearing.
     static final double     WHEEL_DIAMETER_INCHES   = 3.9 ;     // For figuring circumference
@@ -93,9 +95,10 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
         swing_motor  = hardwareMap.get(DcMotor.class, "SwingMotor");
         left_lift  = hardwareMap.get(DcMotor.class, "LeftLift");
         right_lift  = hardwareMap.get(DcMotor.class, "RightLift");
-        left_gate= hardwareMap.get(Servo.class, "LeftGate");
-        right_gate= hardwareMap.get(Servo.class, "RightGate");
-
+        //pixel_claw= hardwareMap.get(Servo.class, "PixelClaw");
+        //pixel_sleeve= hardwareMap.get(Servo.class, "PixelSleeve");
+        left_gate = hardwareMap.get(Servo.class, "LeftGate");
+        right_gate = hardwareMap.get(Servo.class, "RightGate");
 
         // get a reference to the distance sensor that shares the same name.
         sensorDistance = hardwareMap.get(DistanceSensor.class, "Sensor Color");
@@ -152,6 +155,8 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
         if(opModeIsActive()) {
             // Step through each leg of the path,
             // Note: Reverse movement is obtained by setting a negative distance (not speed)
+            left_gate.setPosition(0.7);
+            right_gate.setPosition(0);
             double leftAvg = drawRectangleProcessor.getLeftAvg();
             double middleAvg = drawRectangleProcessor.getMiddleAvg();
             double rightAvg = drawRectangleProcessor.getRightAvg();
@@ -169,7 +174,7 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
                     moveTo = 3;
                 }
             }
-            encoderDrive(DRIVE_SPEED,  32,  32, 5,0, false); // move forward
+            encoderDrive(DRIVE_SPEED,  28,  28, 5,0, false); // move forward
             if(moveTo == 1) {
                 encoderDrive(DRIVE_SPEED -.2, 18, 18, 5, 3, true); // move right
             } else if(moveTo == 2) {
@@ -182,32 +187,70 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
             }
             encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
             telemetry.addData("Success?:", moveTo);
-            right_gate.setPosition(0.4);
+
+            //pixel_claw.setPosition(0.8);
+            //pixel_sleeve.setPosition(0.0);
+            left_gate.setPosition(0.5);
+            right_gate.setPosition(0.3);
+
             encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
 
-            if(isBlue) {
+            if(isBlue) { // cases when blue
                 encoderDrive(DRIVE_SPEED, 12, 12, 5, 2, false);
                 encoderDrive(DRIVE_SPEED, 8, 8, 5, 1, false);
-                if(moveTo == 3) {
-                    encoderDrive(DRIVE_SPEED * 2, 32, 32, 5, 2, false);
+                //encoderDrive(DRIVE_SPEED,8,8,5,0,false);
+                //encoderDrive(DRIVE_SPEED,16,16,5,2,false);
+                //encoderDrive(DRIVE_SPEED,16,16,5,0,false);
+                if(moveTo == 3) { // if left (far from backdrop)
+                    //encoderDrive(DRIVE_SPEED * 2, 18, -18, 5, 0, false);
+                    //encoderDrive(DRIVE_SPEED,-18,18,5,0,true);
+                    //encoderDrive(DRIVE_SPEED,15,15,4,0,false);
+                    //encoderDrive(DRIVE_SPEED - 0.2,8,8,3,3,false);
+                    moveleft(1);
+
 //                    encoderDrive(DRIVE_SPEED * 2, 18, 18, 5, 2, false);
-                } else {
-                    encoderDrive(DRIVE_SPEED, 36, 36, 5, 2, false);
+                } else if (moveTo == 1) { // Right
+                    //encoderDrive(DRIVE_SPEED, 36, 36, 5, 2, false);
+                    //encoderDrive(DRIVE_SPEED,-18,18,5,0,false);
+                    //encoderDrive(DRIVE_SPEED,24,24,5,3,false);
+                    //encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+                    moveright(1);
                 }
-            } else {
+                else { // middle
+                    //encoderDrive(DRIVE_SPEED,-18,18,5,0,false);
+                    //encoderDrive(DRIVE_SPEED,16,16,5,3,false);
+                    //encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+                    movemiddle(1);
+                }
+            } else { // cases when red
                 encoderDrive(DRIVE_SPEED, 12, 12, 5, 3, false);
                 encoderDrive(DRIVE_SPEED, 8, 8, 5, 1, false);
-                if(moveTo == 1) {
-                    encoderDrive(DRIVE_SPEED * 2, 32, 32, 5, 3, false);//was 36 before
+               // if(moveTo == 1) { // if right (far from backdrop)
+               //     encoderDrive(DRIVE_SPEED * 2, 32, 32, 5, 3, false);//was 36 before
 //                    encoderDrive(DRIVE_SPEED * 2, 18, 18, 5, 3, false);
-                } else {
-                    encoderDrive(DRIVE_SPEED, 36, 36, 5, 3, false);
-                }
+               // } else { // anything else (middle, left)
+                //    encoderDrive(DRIVE_SPEED, 36, 36, 5, 3, false);
+               // }
+                 if(moveTo == 1){
+                     moveright(2);
 
+                 }
+                 else if (moveTo == 3){
+                     moveleft(2);
+                 }
+                 else {
+                     movemiddle(2);
+                 }
             }
-            encoderDrive(DRIVE_SPEED, 18, -18, 5, 0, true);
-            encoderDrive(DRIVE_SPEED - .2,-24,-24,5,3,true);
-            encoderDrive(DRIVE_SPEED - .2,-3,-3,5,1,true);
+
+            //encoderDrive(DRIVE_SPEED, 18, -18, 5, 0, true);
+            //encoderDrive(DRIVE_SPEED - .2,-24,-24,5,3,true);
+            //encoderDrive(DRIVE_SPEED - .2,-3,-3,5,1,true);
+//            encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
+//            encoderDrive(DRIVE_SPEED, 18, 18, 5.0, 2);
+//            encoderDrive(DRIVE_SPEED, 24, 24, 5.0, 3);
+//            encoderDrive(DRIVE_SPEED,  24,  24, 5.0, 1);
+
 
 
 
@@ -416,7 +459,47 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
 
         return correction;
     }
+    public void moveleft(int BoR){ // 1 = blue, 2 = red.
+        if (BoR == 1) { // Move for Blue
+            encoderDrive(DRIVE_SPEED, -18, 18, 5, 0, true);
+            encoderDrive(DRIVE_SPEED, 15, 15, 4, 0, false);
+            encoderDrive(DRIVE_SPEED - 0.2, 8, 8, 3, 3, false);
+        }
+        else {
+            encoderDrive(DRIVE_SPEED,18,-18,5,0,false);
+            encoderDrive(DRIVE_SPEED,-22,-22,5,3,false);
+            encoderDrive(DRIVE_SPEED, 24, 24, 5, 0, false );
+            encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+        }
+    }
+    public void moveright(int BoR){
+        if (BoR == 1){
+            encoderDrive(DRIVE_SPEED,-18,18,5,0,false);
+            encoderDrive(DRIVE_SPEED,22,22,5,3,false);
+            encoderDrive(DRIVE_SPEED, 24, 24, 5, 0, false );
+            encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+        }
+        else{
 
+            encoderDrive(DRIVE_SPEED,18,-18,5,0,true);
+            encoderDrive(DRIVE_SPEED,-15,-15,4,0,false);
+            encoderDrive(DRIVE_SPEED - 0.2,8,8,3,3,false);
+        }
+    }
+    public void movemiddle(int BoR){
+        if (BoR == 1){
+            encoderDrive(DRIVE_SPEED,-18,18,5,0,false);
+            encoderDrive(DRIVE_SPEED,10,10,5,3,false);
+            encoderDrive(DRIVE_SPEED, 22, 22, 5, 0, false );
+            encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+        }
+        else{
+            encoderDrive(DRIVE_SPEED,18,-18,5,0,false);
+            encoderDrive(DRIVE_SPEED,-10,-10,5,3,false);
+            encoderDrive(DRIVE_SPEED, 22, 22, 5, 0, false );
+            encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+        }
+    }
     public void turnAngle(double angle, int tolerance, double motorPower) {
         //tolerance: how much angle can be off by
         //motorPower: how fast to turn

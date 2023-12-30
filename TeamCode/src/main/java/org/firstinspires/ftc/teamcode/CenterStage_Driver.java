@@ -22,8 +22,9 @@ public class CenterStage_Driver extends LinearOpMode{
     private DcMotor left_lift  = null;
     private DcMotor right_lift  = null;
     public DcMotor extend= null;
-    public Servo pixel_claw = null;
-    public Servo pixel_sleeve = null;
+    //public Servo pixel_claw = null;
+    public Servo left_gate = null;
+    public Servo right_gate = null;
     private double maxPower = 1;
 
     public double speedFactor = 1.0;  // 100% speed
@@ -47,8 +48,10 @@ public class CenterStage_Driver extends LinearOpMode{
         right_lift  = hardwareMap.get(DcMotor.class, "RightLift");
         //sixth_motor  = hardwareMap.get(DcMotor.class, "SixthMotor");
         //extend = hardwareMap.get(DcMotor.class, "lifter");
-        pixel_claw= hardwareMap.get(Servo.class, "PixelClaw");
-        pixel_sleeve= hardwareMap.get(Servo.class, "PixelSleeve");
+      //  pixel_claw= hardwareMap.get(Servo.class, "PixelClaw");
+        left_gate = hardwareMap.get(Servo.class, "LeftGate");
+        right_gate = hardwareMap.get(Servo.class, "RightGate");
+
         // POV Mode uses left stick to go forward, and right stick to turn.5
         //imu = hardwareMap.get(BNO055IMU.class, "imu");
         // get a reference to touch sensor.
@@ -99,7 +102,7 @@ public class CenterStage_Driver extends LinearOpMode{
             //swing motor
             if (gamepad2.left_trigger==1.0) {
                 swing_motor.setPower(-0.3);
-                pixel_claw.setPosition(1);
+        //        pixel_claw.setPosition(1);
             }
             else {
                 if (gamepad2.left_bumper) {
@@ -127,19 +130,21 @@ public class CenterStage_Driver extends LinearOpMode{
             }
 
 
-
+            //Pixel sleeve
             if (gamepad2.x) {
-                pixel_claw.setPosition(0.73); //open
+          //      pixel_claw.setPosition(0.73); //open
             }
             if (gamepad2.b) {
-                pixel_sleeve.setPosition(0.0); //open
+                left_gate.setPosition(0.5);//open
+                right_gate.setPosition(0.3);
             }
 
             if (gamepad2.y) {
-                pixel_claw.setPosition(1); //close
+            //    pixel_claw.setPosition(1); //close
             }
             if (gamepad2.a) {
-                pixel_sleeve.setPosition(0.2); //close
+                left_gate.setPosition(0.7); //close
+                right_gate.setPosition(0);
             }
 
             if(gamepad1.right_trigger == 1.0) {

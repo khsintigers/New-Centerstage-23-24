@@ -34,6 +34,8 @@ public class CenterStage_Auto_goBuilda2 extends LinearOpMode{
     public DcMotor extend= null;
     public Servo pixel_claw = null;
     public Servo pixel_sleeve = null;
+    public Servo left_gate = null;
+    public Servo right_gate = null;
     static final double     COUNTS_PER_MOTOR_REV    = 537.7 ;    // 1440 = tetrix motor, 537.7 = goBuilda
     static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // No External Gearing.
     static final double     WHEEL_DIAMETER_INCHES   = 3.9 ;     // For figuring circumference
@@ -229,6 +231,8 @@ public class CenterStage_Auto_goBuilda2 extends LinearOpMode{
         double offsetLRPerc = 1.154;
         // Ensure that the OpMode is still active
         if (opModeIsActive()) {
+            left_gate.setPosition(0.7);
+            right_gate.setPosition(0);
 
             // Determine new target position, and pass to motor controller
             if (FBLR == 0) {
@@ -345,6 +349,47 @@ public class CenterStage_Auto_goBuilda2 extends LinearOpMode{
     }
     public boolean wheelsInMotion() {
         return left_rear.isBusy() && right_rear.isBusy() && left_front.isBusy() && right_front.isBusy();
+    }
+    public void moveleft(int BoR){ // 1 = blue, 2 = red.
+        if (BoR == 1) { // Move for Blue
+            encoderDrive(DRIVE_SPEED, -18, 18, 5, 0, true);
+            encoderDrive(DRIVE_SPEED, 15, 15, 4, 0, false);
+            encoderDrive(DRIVE_SPEED - 0.2, 8, 8, 3, 3, false);
+        }
+        else {
+            encoderDrive(DRIVE_SPEED,18,-18,5,0,false);
+            encoderDrive(DRIVE_SPEED,-22,-22,5,3,false);
+            encoderDrive(DRIVE_SPEED, 24, 24, 5, 0, false );
+            encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+        }
+    }
+    public void moveright(int BoR){
+        if (BoR == 1){
+            encoderDrive(DRIVE_SPEED,-18,18,5,0,false);
+            encoderDrive(DRIVE_SPEED,22,22,5,3,false);
+            encoderDrive(DRIVE_SPEED, 24, 24, 5, 0, false );
+            encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+        }
+        else{
+
+            encoderDrive(DRIVE_SPEED,18,-18,5,0,true);
+            encoderDrive(DRIVE_SPEED,-15,-15,4,0,false);
+            encoderDrive(DRIVE_SPEED - 0.2,8,8,3,3,false);
+        }
+    }
+    public void movemiddle(int BoR){
+        if (BoR == 1){
+            encoderDrive(DRIVE_SPEED,-18,18,5,0,false);
+            encoderDrive(DRIVE_SPEED,10,10,5,3,false);
+            encoderDrive(DRIVE_SPEED, 22, 22, 5, 0, false );
+            encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+        }
+        else{
+            encoderDrive(DRIVE_SPEED,18,-18,5,0,false);
+            encoderDrive(DRIVE_SPEED,-10,-10,5,3,false);
+            encoderDrive(DRIVE_SPEED, 22, 22, 5, 0, false );
+            encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+        }
     }
 
 
