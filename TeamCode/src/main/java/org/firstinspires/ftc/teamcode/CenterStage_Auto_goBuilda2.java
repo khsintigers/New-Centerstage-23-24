@@ -100,10 +100,14 @@ public class CenterStage_Auto_goBuilda2 extends LinearOpMode{
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        left_front.setDirection(DcMotorSimple.Direction.FORWARD);
-        left_rear.setDirection(DcMotorSimple.Direction.FORWARD);
-        right_rear.setDirection(DcMotorSimple.Direction.REVERSE);
-        right_front.setDirection(DcMotorSimple.Direction.REVERSE);
+        left_front.setDirection(DcMotorSimple.Direction.REVERSE);
+        left_rear.setDirection(DcMotorSimple.Direction.REVERSE);
+        right_rear.setDirection(DcMotorSimple.Direction.FORWARD);
+        right_front.setDirection(DcMotorSimple.Direction.FORWARD);
+        left_front.setDirection(DcMotorSimple.Direction.REVERSE);
+        left_rear.setDirection(DcMotorSimple.Direction.REVERSE);
+        right_rear.setDirection(DcMotorSimple.Direction.FORWARD);
+        right_front.setDirection(DcMotorSimple.Direction.FORWARD);
 
         left_rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         right_rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
