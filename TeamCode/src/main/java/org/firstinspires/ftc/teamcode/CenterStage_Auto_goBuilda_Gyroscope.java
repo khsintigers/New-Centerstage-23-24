@@ -194,7 +194,7 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
 
             if(isBlue) { // cases when blue
                 encoderDrive(DRIVE_SPEED, 12, 12, 5, 2, false);
-                encoderDrive(DRIVE_SPEED, 8, 8, 5, 1, false);
+                encoderDrive(DRIVE_SPEED, 12, 12, 5, 1, false);
                 //encoderDrive(DRIVE_SPEED,8,8,5,0,false);
                 //encoderDrive(DRIVE_SPEED,16,16,5,2,false);
                 //encoderDrive(DRIVE_SPEED,16,16,5,0,false);
@@ -460,40 +460,40 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
     }
     public void moveleft(int BoR){ // 1 = blue, 2 = red.
         if (BoR == 1) { // Move for Blue
-            encoderDrive(DRIVE_SPEED, -18, 18, 5, 0, true);
+            encoderDrive(DRIVE_SPEED, -28, 28, 5, 0, true);
             encoderDrive(DRIVE_SPEED, 15, 15, 4, 0, false);
             encoderDrive(DRIVE_SPEED - 0.2, 8, 8, 3, 3, false);
         }
         else {
-            encoderDrive(DRIVE_SPEED,18,-18,5,0,false);
-            encoderDrive(DRIVE_SPEED,-22,-22,5,3,false);
+            encoderDrive(DRIVE_SPEED,28,-28,5,0,false);
+            encoderDrive(DRIVE_SPEED,-28,-28,5,3,false);
             encoderDrive(DRIVE_SPEED, 24, 24, 5, 0, false );
             encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
         }
     }
     public void moveright(int BoR){
         if (BoR == 1){
-            encoderDrive(DRIVE_SPEED,-18,18,5,0,false);
-            encoderDrive(DRIVE_SPEED,22,22,5,3,false);
+            encoderDrive(DRIVE_SPEED,-28,28,5,0,false);
+            encoderDrive(DRIVE_SPEED,28,-28,5,3,false);
             encoderDrive(DRIVE_SPEED, 24, 24, 5, 0, false );
             encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
         }
         else{
 
-            encoderDrive(DRIVE_SPEED,18,-18,5,0,true);
+            encoderDrive(DRIVE_SPEED,28,-28,5,0,true);
             encoderDrive(DRIVE_SPEED,-15,-15,4,0,false);
             encoderDrive(DRIVE_SPEED - 0.2,8,8,3,3,false);
         }
     }
     public void movemiddle(int BoR){
         if (BoR == 1){
-            encoderDrive(DRIVE_SPEED,18,-18,5,0,false);
+            encoderDrive(DRIVE_SPEED,20,-20,5,0,false);
             encoderDrive(DRIVE_SPEED,10,10,5,3,false);
             encoderDrive(DRIVE_SPEED, 22, 22, 5, 0, false );
             encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
         }
         else{
-            encoderDrive(DRIVE_SPEED,-18,18,5,0,false);
+            encoderDrive(DRIVE_SPEED,-20,20,5,0,false);
             encoderDrive(DRIVE_SPEED,-10,-10,5,3,false);
             encoderDrive(DRIVE_SPEED, 22, 22, 5, 0, false );
             encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
@@ -519,4 +519,13 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
             telemetry.update();
         }
     }
+
+    public void turn_left_90(int speed) {
+        encoderDrive(speed,-20,20,5,0,false);
+    }
+    public void turn_right_90(int speed) {
+        encoderDrive(speed,20,-20,5,0,false);
+    }
+
+
 }
