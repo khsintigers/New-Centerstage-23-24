@@ -112,10 +112,10 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        left_front.setDirection(DcMotorSimple.Direction.FORWARD);
-        left_rear.setDirection(DcMotorSimple.Direction.FORWARD);
-        right_rear.setDirection(DcMotorSimple.Direction.REVERSE);
-        right_front.setDirection(DcMotorSimple.Direction.REVERSE);
+        left_front.setDirection(DcMotorSimple.Direction.REVERSE);
+        left_rear.setDirection(DcMotorSimple.Direction.REVERSE);
+        right_rear.setDirection(DcMotorSimple.Direction.FORWARD);
+        right_front.setDirection(DcMotorSimple.Direction.FORWARD);
 
         left_rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         right_rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -304,12 +304,13 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
                 newRightTargetR = right_rear.getCurrentPosition() + (int)(-rightInches * COUNTS_PER_INCH);
                 newLeftTargetF = left_front.getCurrentPosition() + (int)(-leftInches * COUNTS_PER_INCH);
                 newRightTargetF = right_front.getCurrentPosition() + (int)(-rightInches * COUNTS_PER_INCH);
-            } else if (FBLR == 2) {
+            } else if (FBLR == 3
+            ) {
                 newLeftTargetR = left_rear.getCurrentPosition() + (int) (leftInches * offsetLRPerc * COUNTS_PER_INCH);
                 newRightTargetR = right_rear.getCurrentPosition() + (int) (-rightInches * offsetLRPerc * COUNTS_PER_INCH);
                 newLeftTargetF = left_front.getCurrentPosition() + (int) (-leftInches * offsetLRPerc * COUNTS_PER_INCH);
                 newRightTargetF = right_front.getCurrentPosition() + (int) (rightInches * offsetLRPerc * COUNTS_PER_INCH);
-            } else if (FBLR == 3) {
+            } else if (FBLR == 2) {
                 newLeftTargetR = left_rear.getCurrentPosition() + (int) (-leftInches *offsetLRPerc * COUNTS_PER_INCH);
                 newRightTargetR = right_rear.getCurrentPosition() + (int) (rightInches *offsetLRPerc* COUNTS_PER_INCH);
                 newLeftTargetF = left_front.getCurrentPosition() + (int) (leftInches *offsetLRPerc* COUNTS_PER_INCH);
@@ -347,8 +348,8 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
             // always end the motion as soon as possible.
             // However, if you require that BOTH motors have finished their moves before the robot continues
             // onto the next step, use (isBusy() || isBusy()) in the loop test.
-            int redCutOff = 90;
-            int blueCutOff = 120;
+            int redCutOff = 180;
+            int blueCutOff = 270;
             while (opModeIsActive() &&
                     (runtime.seconds() < timeoutS) &&
                     (wheelsInMotion())) {
@@ -486,13 +487,13 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
     }
     public void movemiddle(int BoR){
         if (BoR == 1){
-            encoderDrive(DRIVE_SPEED,-18,18,5,0,false);
+            encoderDrive(DRIVE_SPEED,18,-18,5,0,false);
             encoderDrive(DRIVE_SPEED,10,10,5,3,false);
             encoderDrive(DRIVE_SPEED, 22, 22, 5, 0, false );
             encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
         }
         else{
-            encoderDrive(DRIVE_SPEED,18,-18,5,0,false);
+            encoderDrive(DRIVE_SPEED,-18,18,5,0,false);
             encoderDrive(DRIVE_SPEED,-10,-10,5,3,false);
             encoderDrive(DRIVE_SPEED, 22, 22, 5, 0, false );
             encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
