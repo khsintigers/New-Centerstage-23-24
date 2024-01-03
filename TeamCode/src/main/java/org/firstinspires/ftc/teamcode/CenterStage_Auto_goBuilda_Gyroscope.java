@@ -40,7 +40,7 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
     private DcMotor left_lift  = null;
     private DcMotor right_lift  = null;
     public DcMotor extend= null;
-    public Servo pixel_claw = null;
+    public Servo pixel_arm = null;
     public Servo pixel_sleeve = null;
     public Servo left_gate = null;
     public Servo right_gate = null;
@@ -94,7 +94,7 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
         swing_motor  = hardwareMap.get(DcMotor.class, "SwingMotor");
         left_lift  = hardwareMap.get(DcMotor.class, "LeftLift");
         right_lift  = hardwareMap.get(DcMotor.class, "RightLift");
-        //pixel_claw= hardwareMap.get(Servo.class, "PixelClaw");
+        pixel_arm= hardwareMap.get(Servo.class, "PixelArm");
         //pixel_sleeve= hardwareMap.get(Servo.class, "PixelSleeve");
         left_gate = hardwareMap.get(Servo.class, "LeftGate");
         right_gate = hardwareMap.get(Servo.class, "RightGate");
@@ -149,13 +149,15 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
         telemetry.addData( "Right Avg: ",drawRectangleProcessor.getRightAvg());
         telemetry.update();
 
+        retractPixel();
+        closePixelClaw();
+
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         if(opModeIsActive()) {
             // Step through each leg of the path,
             // Note: Reverse movement is obtained by setting a negative distance (not speed)
-            left_gate.setPosition(0.7);
-            right_gate.setPosition(0);
+            closePixelClaw();
             double leftAvg = drawRectangleProcessor.getLeftAvg();
             double middleAvg = drawRectangleProcessor.getMiddleAvg();
             double rightAvg = drawRectangleProcessor.getRightAvg();
@@ -175,42 +177,53 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
             }
             encoderDrive(DRIVE_SPEED,  28,  28, 5,0, false); // move forward
             if(moveTo == 1) {
-                encoderDrive(DRIVE_SPEED -.2, 18, 18, 5, 3, true); // move right
+                encoderDrive(DRIVE_SPEED -.2, 18, 18, 5, 2, true); // move right
             } else if(moveTo == 2) {
                 encoderDrive(DRIVE_SPEED-.2,  36,  36, 5, 0, true); // move forward
             } else if (moveTo == 3) {
-                encoderDrive(DRIVE_SPEED -.2,  36,  36, 5, 2, true); // move left
+                encoderDrive(DRIVE_SPEED -.2,  36,  36, 5, 3, true); // move left
             } else {
                 encoderDrive(DRIVE_SPEED-.2,  36,  36, 5, 0, true); // move forward
             }
-            encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
+
+            if ((moveTo == 1 && !isBlue) || (moveTo == 3 && isBlue)) { // close to backboard
+                openPixelClaw();
+                encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
+            } else if (moveTo == 2) {
+                encoderDrive(DRIVE_SPEED, 2, 2, 5, 1, false);
+                openPixelClaw();
+                encoderDrive(DRIVE_SPEED, 8, 8, 5, 1, false);
+            } else { // far from rigging
+                openPixelClaw();
+                encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
+            }
+
             telemetry.addData("Success?:", moveTo);
             //pixel_claw.setPosition(0.8);
             //pixel_sleeve.setPosition(0.0);
-            left_gate.setPosition(0.5);
-            right_gate.setPosition(0.3);
-            encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
+
+//            if (moveTo == 3 && !isBlue){
+//                encoderDrive(DRIVE_SPEED,1,1,3,1,false);
+//                left_gate.setPosition(0.7);
+//                right_gate.setPosition(0);
+//            }
+//            else{
+//            encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);}
             sleep(1000);
 
             if(isBlue) { // cases when blue
-                encoderDrive(DRIVE_SPEED, 12, 12, 5, 2, false);
-                encoderDrive(DRIVE_SPEED, 12, 12, 5, 1, false);
-                //encoderDrive(DRIVE_SPEED,8,8,5,0,false);
-                //encoderDrive(DRIVE_SPEED,16,16,5,2,false);
-                //encoderDrive(DRIVE_SPEED,16,16,5,0,false);
+                encoderDrive(DRIVE_SPEED, 12, 12, 5, 3, false);
+                if(!(moveTo == 3 && isBlue)) {
+                    encoderDrive(DRIVE_SPEED, -8, -8, 5, 1, false);
+                }
+
                 if(moveTo == 3) { // if left (far from backdrop)
-                    //encoderDrive(DRIVE_SPEED * 2, 18, -18, 5, 0, false);
-                    //encoderDrive(DRIVE_SPEED,-18,18,5,0,true);
-                    //encoderDrive(DRIVE_SPEED,15,15,4,0,false);
-                    //encoderDrive(DRIVE_SPEED - 0.2,8,8,3,3,false);
+
                     moveleft(1);
 
 //                    encoderDrive(DRIVE_SPEED * 2, 18, 18, 5, 2, false);
                 } else if (moveTo == 1) { // Right
-                    //encoderDrive(DRIVE_SPEED, 36, 36, 5, 2, false);
-                    //encoderDrive(DRIVE_SPEED,-18,18,5,0,false);
-                    //encoderDrive(DRIVE_SPEED,24,24,5,3,false);
-                    //encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+
                     moveright(1);
                 }
                 else { // middle
@@ -220,17 +233,13 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
                     movemiddle(1);
                 }
             } else { // cases when red
-                encoderDrive(DRIVE_SPEED, 12, 12, 5, 3, false);
-                encoderDrive(DRIVE_SPEED, 8, 8, 5, 1, false);
-               // if(moveTo == 1) { // if right (far from backdrop)
-               //     encoderDrive(DRIVE_SPEED * 2, 32, 32, 5, 3, false);//was 36 before
-//                    encoderDrive(DRIVE_SPEED * 2, 18, 18, 5, 3, false);
-               // } else { // anything else (middle, left)
-                //    encoderDrive(DRIVE_SPEED, 36, 36, 5, 3, false);
-               // }
+                encoderDrive(DRIVE_SPEED, -12, -12, 5, 3, false);
+                if(!(moveTo == 1 && !isBlue)) {
+                    encoderDrive(DRIVE_SPEED, -8, -8, 5, 1, false);
+                }
+
                  if(moveTo == 1){
                      moveright(2);
-
                  }
                  else if (moveTo == 3){
                      moveleft(2);
@@ -239,19 +248,7 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
                      movemiddle(2);
                  }
             }
-            //encoderDrive(DRIVE_SPEED, 18, -18, 5, 0, true);
-            //encoderDrive(DRIVE_SPEED - .2,-24,-24,5,3,true);
-            //encoderDrive(DRIVE_SPEED - .2,-3,-3,5,1,true);
-//            encoderDrive(DRIVE_SPEED,  36,  36, 5.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
-//            encoderDrive(DRIVE_SPEED, 18, 18, 5.0, 2);
-//            encoderDrive(DRIVE_SPEED, 24, 24, 5.0, 3);
-//            encoderDrive(DRIVE_SPEED,  24,  24, 5.0, 1);
 
-
-
-
-//        encoderDrive(TURN_SPEED,   12, -12, 4.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
-//        encoderDrive(DRIVE_SPEED, -24, -24, 4.0);  // S3: Reverse 24 Inches with 4 Sec timeout
 
             telemetry.addData("Path", "Complete");
             telemetry.update();
@@ -358,7 +355,7 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
                             (int) (sensorColor.green() * SCALE_FACTOR),
                             (int) (sensorColor.blue() * SCALE_FACTOR),
                             hsvValues);
-                    // Displays Data
+                     // Displays Data
                     telemetry.addData("Distance (cm)",
                             String.format(Locale.US, "%.02f", sensorDistance.getDistance(DistanceUnit.CM)));
                     telemetry.addData("Red  ", sensorColor.red());
@@ -460,43 +457,72 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
     }
     public void moveleft(int BoR){ // 1 = blue, 2 = red.
         if (BoR == 1) { // Move for Blue
-            encoderDrive(DRIVE_SPEED, -28, 28, 5, 0, true);
-            encoderDrive(DRIVE_SPEED, 15, 15, 4, 0, false);
-            encoderDrive(DRIVE_SPEED - 0.2, 8, 8, 3, 3, false);
+            closePixelClaw();
+            turn_left_90();
+            encoderDrive(DRIVE_SPEED,8,8,4,0,false);
+            encoderDrive(DRIVE_SPEED, 6, 6, 4, 3, false);
+            encoderDrive(DRIVE_SPEED/3,2,2,3,3,false);
+            encoderDrive(DRIVE_SPEED/3, 5, 5, 4,0, false);
+            placePixel();
         }
         else {
-            encoderDrive(DRIVE_SPEED,28,-28,5,0,false);
-            encoderDrive(DRIVE_SPEED,-28,-28,5,3,false);
-            encoderDrive(DRIVE_SPEED, 24, 24, 5, 0, false );
-            encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+            //encoderDrive(DRIVE_SPEED,-28,28,5,0,false);
+            //encoderDrive(DRIVE_SPEED,-28,-28,5,3,false);
+            //encoderDrive(DRIVE_SPEED, 24, 24, 5, 0, false );
+            //encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+            encoderDrive(DRIVE_SPEED,-20,-20,5,3,false);
+            turn_right_90();
+            encoderDrive(DRIVE_SPEED,12,12,5,0,false);
+            closePixelClaw();
+            encoderDrive(DRIVE_SPEED-.2,7,7,5,2,false);
+            encoderDrive(DRIVE_SPEED-.2,4,4,5,0,false);
+            placePixel();
+
         }
     }
     public void moveright(int BoR){
         if (BoR == 1){
-            encoderDrive(DRIVE_SPEED,-28,28,5,0,false);
-            encoderDrive(DRIVE_SPEED,28,-28,5,3,false);
-            encoderDrive(DRIVE_SPEED, 24, 24, 5, 0, false );
-            encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+            encoderDrive(DRIVE_SPEED,-20,-20,5,2,false);
+            turn_left_90();
+            encoderDrive(DRIVE_SPEED,12,12,5,0,false);
+            closePixelClaw();
+            encoderDrive(DRIVE_SPEED-.2,5,5,5,3,false);
+            encoderDrive(DRIVE_SPEED-.2,4,4,5,0,false);
+            placePixel();
         }
         else{
-
-            encoderDrive(DRIVE_SPEED,28,-28,5,0,true);
-            encoderDrive(DRIVE_SPEED,-15,-15,4,0,false);
-            encoderDrive(DRIVE_SPEED - 0.2,8,8,3,3,false);
+            closePixelClaw();
+            turn_right_90();
+            encoderDrive(DRIVE_SPEED,8,8,4,0,false);
+            encoderDrive(DRIVE_SPEED, 4, 4, 4, 3, false);
+            encoderDrive(DRIVE_SPEED/3,6,6,3,3,false);
+            encoderDrive(DRIVE_SPEED/3, 5, 5, 4,0, false);
+            placePixel();
         }
     }
     public void movemiddle(int BoR){
         if (BoR == 1){
-            encoderDrive(DRIVE_SPEED,20,-20,5,0,false);
-            encoderDrive(DRIVE_SPEED,10,10,5,3,false);
-            encoderDrive(DRIVE_SPEED, 22, 22, 5, 0, false );
-            encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+            turn_left_90();
+            encoderDrive(DRIVE_SPEED,-6,-6,5,2,false);
+            encoderDrive(DRIVE_SPEED,10,10,5,0,false);
+            left_gate.setPosition(0.7);
+            right_gate.setPosition(0);
+            encoderDrive(DRIVE_SPEED/3,13,13,3,0,false);
+            encoderDrive(DRIVE_SPEED/3, 4, 4, 4, 3, false);
+            placePixel();
         }
         else{
-            encoderDrive(DRIVE_SPEED,-20,20,5,0,false);
-            encoderDrive(DRIVE_SPEED,-10,-10,5,3,false);
-            encoderDrive(DRIVE_SPEED, 22, 22, 5, 0, false );
-            encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+            //encoderDrive(DRIVE_SPEED,-20,20,5,0,false);
+            //encoderDrive(DRIVE_SPEED,-10,-10,5,3,false);
+            //encoderDrive(DRIVE_SPEED, 22, 22, 5, 0, false );
+            //encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
+            turn_right_90();
+            encoderDrive(DRIVE_SPEED,-6,-6,5,3,false);
+            encoderDrive(DRIVE_SPEED,10,10,5,0,false);
+            closePixelClaw();
+            encoderDrive(DRIVE_SPEED/3,13,13,3,0,false);
+            encoderDrive(DRIVE_SPEED/3, 4, 4, 4, 3, false);
+            placePixel();
         }
     }
     public void turnAngle(double angle, int tolerance, double motorPower) {
@@ -520,12 +546,36 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
         }
     }
 
-    public void turn_left_90(int speed) {
-        encoderDrive(speed,-20,20,5,0,false);
+    public void turn_left_90() {
+        encoderDrive(DRIVE_SPEED,-20,20,5,0,false);
     }
-    public void turn_right_90(int speed) {
-        encoderDrive(speed,20,-20,5,0,false);
+    public void turn_right_90() {
+        encoderDrive(DRIVE_SPEED,20,-20,5,0,false);
+
     }
+    public void closePixelClaw() {
+        left_gate.setPosition(0.7);
+        right_gate.setPosition(0);
+    }
+    public void openPixelClaw() {
+        left_gate.setPosition(0.5);
+        right_gate.setPosition(0.3);
+    }
+    public void movePixelArmToPlace() {
+        for(int i = 5; i<=10; i++) {
+            pixel_arm.setPosition((double)(i) / 10);
+        }
+    }
+    public void retractPixel() {
+        pixel_arm.setPosition(0.5);
+    }
+    public void placePixel() {
+        movePixelArmToPlace();
+        sleep(1500);
+        encoderDrive(DRIVE_SPEED/3, 4, 4, 4, 1, false);
+        retractPixel();
+    }
+
 
 
 }

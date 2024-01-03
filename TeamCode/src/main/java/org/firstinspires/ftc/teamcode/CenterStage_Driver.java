@@ -23,6 +23,7 @@ public class CenterStage_Driver extends LinearOpMode{
     private DcMotor right_lift  = null;
     public DcMotor extend= null;
     //public Servo pixel_claw = null;
+    public Servo pixel_arm = null;
     public Servo left_gate = null;
     public Servo right_gate = null;
     private double maxPower = 1;
@@ -51,6 +52,7 @@ public class CenterStage_Driver extends LinearOpMode{
       //  pixel_claw= hardwareMap.get(Servo.class, "PixelClaw");
         left_gate = hardwareMap.get(Servo.class, "LeftGate");
         right_gate = hardwareMap.get(Servo.class, "RightGate");
+        pixel_arm= hardwareMap.get(Servo.class, "PixelArm");
 
         // POV Mode uses left stick to go forward, and right stick to turn.5
         //imu = hardwareMap.get(BNO055IMU.class, "imu");
@@ -58,7 +60,6 @@ public class CenterStage_Driver extends LinearOpMode{
         //touchLeft = hardwareMap.touchSensor.get("TouchLeft");
         //touchRight = hardwareMap.touchSensor.get("TouchRight");
 
-        int lifterBottom = 0;
 
         left_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         right_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -87,6 +88,7 @@ public class CenterStage_Driver extends LinearOpMode{
         swing_motor.setPower(0);
         left_lift.setPower(0);
         right_lift.setPower(0);
+        pixel_arm.setPosition(0.5);
 
         waitForStart();
         runtime.reset();
@@ -128,7 +130,7 @@ public class CenterStage_Driver extends LinearOpMode{
 
             //Pixel sleeve
             if (gamepad2.x) {
-          //      pixel_claw.setPosition(0.73); //open
+                pixel_arm.setPosition(pixel_arm.getPosition() + 0.01);
             }
             if (gamepad2.b) {
                 left_gate.setPosition(0.5);//open
@@ -136,7 +138,7 @@ public class CenterStage_Driver extends LinearOpMode{
             }
 
             if (gamepad2.y) {
-            //    pixel_claw.setPosition(1); //close
+                pixel_arm.setPosition(pixel_arm.getPosition() - 0.01);
             }
             if (gamepad2.a) {
                 left_gate.setPosition(0.7); //close
@@ -189,6 +191,7 @@ public class CenterStage_Driver extends LinearOpMode{
             }
 */
             telemetry.addData("lift: ","running" );
+            telemetry.addData("position", pixel_arm.getPosition());
             telemetry.update();
 
 
