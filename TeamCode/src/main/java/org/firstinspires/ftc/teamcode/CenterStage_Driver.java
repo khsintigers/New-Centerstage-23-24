@@ -26,6 +26,7 @@ public class CenterStage_Driver extends LinearOpMode{
     public Servo pixel_arm = null;
     public Servo left_gate = null;
     public Servo right_gate = null;
+    public Servo launch_release;
     private double maxPower = 1;
 
     public double speedFactor = 1.0;  // 100% speed
@@ -53,6 +54,7 @@ public class CenterStage_Driver extends LinearOpMode{
         left_gate = hardwareMap.get(Servo.class, "LeftGate");
         right_gate = hardwareMap.get(Servo.class, "RightGate");
         pixel_arm= hardwareMap.get(Servo.class, "PixelArm");
+        launch_release = hardwareMap.get(Servo.class,"LaunchRelease");
 
         // POV Mode uses left stick to go forward, and right stick to turn.5
         //imu = hardwareMap.get(BNO055IMU.class, "imu");
@@ -77,8 +79,10 @@ public class CenterStage_Driver extends LinearOpMode{
         left_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         right_lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        right_rear.setDirection(DcMotorSimple.Direction.REVERSE);
-        left_rear.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        left_front.setDirection(DcMotorSimple.Direction.REVERSE);
+        right_front.setDirection(DcMotorSimple.Direction.REVERSE);
+
 
         left_lift.setDirection(DcMotorSimple.Direction.REVERSE);
         // set power to zero to avoid a FTC bug
@@ -89,7 +93,7 @@ public class CenterStage_Driver extends LinearOpMode{
         left_lift.setPower(0);
         right_lift.setPower(0);
         pixel_arm.setPosition(0.5);
-
+        launch_release.setPosition(0.0);
         waitForStart();
         runtime.reset();
 
@@ -141,18 +145,26 @@ public class CenterStage_Driver extends LinearOpMode{
                 pixel_arm.setPosition(pixel_arm.getPosition() - 0.01);
             }
             if (gamepad2.a) {
-                left_gate.setPosition(0.7); //close
-                right_gate.setPosition(0);
+                left_gate.setPosition(1); //close
+                right_gate.setPosition(-.1);
             }
 
+            if (gamepad1.y) {
+                launch_release.setPosition(0.5);
+            }
+            else {
+                launch_release.setPosition(0.0);
+            }
+
+
             if(gamepad1.right_trigger == 1.0) {
-                maxPower = 0.75;
+                maxPower = 1;
             } else if (gamepad1.right_bumper) {
-                maxPower = 0.50;
+                maxPower = .75;
             } else if (gamepad1.left_bumper) {
-                maxPower = 0.25;
+                maxPower = .50;
             } else if (gamepad1.left_trigger == 1.0) {
-                maxPower = 0.1;
+                maxPower = .25;
             }
 /*
             if (gamepad1.dpad_down) {
