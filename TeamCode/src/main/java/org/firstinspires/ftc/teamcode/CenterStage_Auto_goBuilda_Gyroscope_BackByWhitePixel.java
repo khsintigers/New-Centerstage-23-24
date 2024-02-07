@@ -44,7 +44,7 @@ public class CenterStage_Auto_goBuilda_Gyroscope_BackByWhitePixel extends Linear
     public Servo pixel_sleeve = null;
     public Servo left_gate = null;
     public Servo right_gate = null;
-    static final double     COUNTS_PER_MOTOR_REV    = 537.7 ;    // 1440 = tetrix motor, 537.7 = goBuilda
+    static final double     COUNTS_PER_MOTOR_REV    = 537.7 ;    // 1440 = tetrix motor, 537.7 = goBuilda |
     static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // No External Gearing.
     static final double     WHEEL_DIAMETER_INCHES   = 3.9 ;     // For figuring circumference
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
