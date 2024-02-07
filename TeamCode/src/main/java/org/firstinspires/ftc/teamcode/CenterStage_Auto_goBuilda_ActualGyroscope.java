@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.view.View;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -26,7 +27,7 @@ import java.util.Locale;
 
 
 @Autonomous()
-public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
+public class CenterStage_Auto_goBuilda_ActualGyroscope extends LinearOpMode{
 
     /* Declare OpMode members. */
     BNO055IMU imu; //gyroscope
@@ -98,7 +99,7 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
         //pixel_sleeve= hardwareMap.get(Servo.class, "PixelSleeve");
         left_gate = hardwareMap.get(Servo.class, "LeftGate");
         right_gate = hardwareMap.get(Servo.class, "RightGate");
-        int TellMoveWhere = 1;
+        int TellMoveWhere = 0;
         // get a reference to the distance sensor that shares the same name.
         sensorDistance = hardwareMap.get(DistanceSensor.class, "Sensor Color");
 
@@ -135,6 +136,9 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
 
         left_lift.setDirection(DcMotorSimple.Direction.REVERSE);
 
+
+
+
         initVision();
         // Send telemetry message to indicate successful Encoder reset
         telemetry.addData("Starting at",  "%7d :%7d :%7d :%7d",
@@ -148,22 +152,29 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
         telemetry.addData( "Middle Avg: ",drawRectangleProcessor.getMiddleAvg());
         telemetry.addData( "Right Avg: ",drawRectangleProcessor.getRightAvg());
         telemetry.update();
-       // int CloseLoop = 1;
-       // while( CloseLoop == 1 ) {
-          //  if (gamepad1.a) {
-          //      TellMoveWhere = 1;
-            //    telemetry.addData("Parking in left cornner After Pathing is done! :) ", 0);
-            //    CloseLoop = 2;
-          //  }
-           // if (gamepad2.b){
-            //      TellMoveWhere = 2;
-            //     telemetry.addData("Park in right cornner! :)",0);
-             //    CloseLoop = 2;
-            //     }
-      //  }
+        int CloseLoop = 1;
+        while( CloseLoop == 1 ) {
+            if (gamepad1.a) {
+                TellMoveWhere = 1;
+                telemetry.addData("Parking in left cornner After Pathing is done! :) ", 0);
+                CloseLoop = 2;
+            }
+            if (gamepad2.b){
+                  TellMoveWhere = 2;
+                 telemetry.addData("Park in right cornner! :)",0);
+                 CloseLoop = 2;
+                 }
+        }
 
         retractPixel();
         closePixelClaw();
+
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+//        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.RIGHT));
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
 
 
         // Wait for the game to start (driver presses PLAY)
@@ -191,11 +202,13 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
                     moveTo = 3;
                 }
             }
+
+            turnAngle(90.0, 5, 0.3);
+
+            /*
             encoderDrive(DRIVE_SPEED,  28,  28, 5,0, false); // move forward
             if(moveTo == 1) {
-                encoderDrive(DRIVE_SPEED-.2, 18, 18, 5, 2, true); // move right
-                //encoderDrive(DRIVE_SPEED,15,-15,5,0,false);
-
+                encoderDrive(DRIVE_SPEED -.2, 18, 18, 5, 2, true); // move right
             } else if(moveTo == 2) {
                 encoderDrive(DRIVE_SPEED-.2,  36,  36, 5, 0, true); // move forward
             } else if (moveTo == 3) {
@@ -204,55 +217,16 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
                 encoderDrive(DRIVE_SPEED-.2,  36,  36, 5, 0, true); // move forward
             }
 
-            if ((moveTo == 1)) { // close to backboard
-
-                if ((moveTo == 1 && !isBlue)){
-                    openPixelClaw();
-                    encoderDrive(DRIVE_SPEED, 8, 8, 5, 1, false);
-                    closePixelClaw();
-                    turn_right_90();
-                    encoderDrive(DRIVE_SPEED,30,30,5,0,false);
-                }
-                else{
-                    openPixelClaw();
-                    encoderDrive(DRIVE_SPEED, 5, 5, 5, 1, false);
-                    closePixelClaw();
-                    encoderDrive(DRIVE_SPEED, 12, 12, 5, 3, false);
-                    //sleep(50);
-                    turn_left_90();
-                    encoderDrive(DRIVE_SPEED, 40, 40, 5, 0, false);
-                }
-            } else if (moveTo == 2) {
-                encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
+            if ((moveTo == 1 && !isBlue) || (moveTo == 3 && isBlue)) { // close to backboard
                 openPixelClaw();
-                encoderDrive(DRIVE_SPEED, 9, 9, 5, 1, false);
-                closePixelClaw();
-                if ((moveTo == 2 && !isBlue)){
-                    turn_right_90();
-                    encoderDrive(DRIVE_SPEED,38,38,5,0,false);
-                }
-                else {
-                    turn_left_90();
-                    encoderDrive(DRIVE_SPEED,38,38,5,0,false);
-                }
+                encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
+            } else if (moveTo == 2) {
+                encoderDrive(DRIVE_SPEED, 2, 2, 5, 1, false);
+                openPixelClaw();
+                encoderDrive(DRIVE_SPEED, 8, 8, 5, 1, false);
             } else { // far from rigging
                 openPixelClaw();
-
-                if ((moveTo == 3 && !isBlue)) {
-                    encoderDrive(DRIVE_SPEED, 6, 6, 5, 1, false);
-                    closePixelClaw();
-                    encoderDrive(DRIVE_SPEED,2,2,5,0,false);
-                    encoderDrive(DRIVE_SPEED, 12, 12, 5, 2, false);
-                    //sleep(50);
-                    turn_right_90();
-                    encoderDrive(DRIVE_SPEED, 40, 40, 5, 0, false);
-                }
-                else{
-                    encoderDrive(DRIVE_SPEED, 10, 10, 5, 1, false);
-                    closePixelClaw();
-                    turn_left_90();
-                    encoderDrive(DRIVE_SPEED,30,30,5,0,false);
-                }
+                encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);
             }
 
             telemetry.addData("Success?:", moveTo);
@@ -266,13 +240,13 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
 //            }
 //            else{
 //            encoderDrive(DRIVE_SPEED, 4, 4, 5, 1, false);}
-            sleep(100);
+            sleep(1000);
 
             if(isBlue) { // cases when blue
-               // encoderDrive(DRIVE_SPEED, 12, 12, 5, 3, false);
-                //if(!(moveTo == 3 && isBlue)) {
-                  //  encoderDrive(DRIVE_SPEED, -8, -8, 5, 1, false);
-                //}
+                encoderDrive(DRIVE_SPEED, 12, 12, 5, 3, false);
+                if(!(moveTo == 3 && isBlue)) {
+                    encoderDrive(DRIVE_SPEED, -8, -8, 5, 1, false);
+                }
 
                 if(moveTo == 3) { // if left (far from backdrop)
 
@@ -290,10 +264,10 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
                     movemiddle(1);
                 }
             } else { // cases when red
-                //encoderDrive(DRIVE_SPEED, -12, -12, 5, 3, false);
-                //if(!(moveTo == 1 && !isBlue)) {
-                  //  encoderDrive(DRIVE_SPEED, -8, -8, 5, 1, false);
-                //}
+                encoderDrive(DRIVE_SPEED, -12, -12, 5, 3, false);
+                if(!(moveTo == 1 && !isBlue)) {
+                    encoderDrive(DRIVE_SPEED, -8, -8, 5, 1, false);
+                }
 
                  if(moveTo == 1){
                      moveright(2);
@@ -332,11 +306,13 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
 
             }
 
+             */
+
             telemetry.addData("Path", "Complete");
             telemetry.update();
         }
 
-        sleep(50);  // pause to display final telemetry message.
+        sleep(1000);  // pause to display final telemetry message.
     }
 //    @Override
 //    public void init_loop() {
@@ -448,14 +424,14 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
                         telemetry.addData("Red Found!", "STOP!");
                         stopAllMotion();
                         isBlue = false;
-                        sleep(50);
+                        sleep(500);
 
 
                     } else if (sensorColor.blue() >= blueCutOff) {
                         telemetry.addData("Blue Found!", "STOP!");
                         stopAllMotion();
                         isBlue = true;
-                        sleep(50);
+                        sleep(500);
                     }
                 }
 
@@ -476,7 +452,7 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
             left_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             right_front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-            sleep(50);   // optional pause after each move.
+            sleep(250);   // optional pause after each move.
         }
 
 
@@ -540,10 +516,12 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
     public void moveleft(int BoR){ // 1 = blue, 2 = red.
         if (BoR == 1) { // Move for Blue
             closePixelClaw();
-            //encoderDrive(DRIVE_SPEED+.5, 14, 14, 4, 3, false);
-            encoderDrive(DRIVE_SPEED-.2,2,2,4,0,false);
+            turn_left_90();
+            encoderDrive(DRIVE_SPEED,8,8,4,0,false);
+            encoderDrive(DRIVE_SPEED, 6, 6, 4, 3, false);
+            encoderDrive(DRIVE_SPEED/3,1,1,3,3,false);
+            encoderDrive(DRIVE_SPEED/3, 8, 8, 4,0, false);
             placePixel();
-
         }
         else {
             //encoderDrive(DRIVE_SPEED,-28,28,5,0,false);
@@ -551,39 +529,46 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
             //encoderDrive(DRIVE_SPEED, 24, 24, 5, 0, false );
             //encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
             closePixelClaw();
-            //encoderDrive(DRIVE_SPEED,-20,-20,5,3,false);
-            //turn_right_90();
-            //encoderDrive(DRIVE_SPEED,12,12,5,0,false);
-            //closePixelClaw();
-            //encoderDrive(DRIVE_SPEED-.2,9,9,5,3,false);
-            //encoderDrive(DRIVE_SPEED-.2,8,8,5,0,false);
-            encoderDrive(DRIVE_SPEED,16,16,5,3,false);
-            encoderDrive(DRIVE_SPEED-.2,2,2,5,0,false);
+            encoderDrive(DRIVE_SPEED,-20,-20,5,3,false);
+            turn_right_90();
+            encoderDrive(DRIVE_SPEED,12,12,5,0,false);
+            closePixelClaw();
+            encoderDrive(DRIVE_SPEED-.2,9,9,5,3,false);
+            encoderDrive(DRIVE_SPEED-.2,8,8,5,0,false);
             placePixel();
         }
     }
     public void moveright(int BoR){
         if (BoR == 1){
-            encoderDrive(DRIVE_SPEED,7,7,5,2,false);
-            encoderDrive(DRIVE_SPEED-.2,2,2,5,0,false);
+            closePixelClaw();
+            encoderDrive(DRIVE_SPEED,-21,-21,5,2,false);
+            turn_left_90();
+            encoderDrive(DRIVE_SPEED,12,12,5,0,false);
+            closePixelClaw();
+            encoderDrive(DRIVE_SPEED-.2,7,7,4,3,false);
+            encoderDrive(DRIVE_SPEED-.2,7,7,5,0,false);
             placePixel();
         }
         else{
             closePixelClaw();
-            //turn_right_90();
-            //encoderDrive(DRIVE_SPEED+.5,8,8,4,0,false);
-            encoderDrive(DRIVE_SPEED+.5, 9, 9, 4, 3, false);
-            encoderDrive(DRIVE_SPEED-.2,2,2,4,0,false);
-            //encoderDrive(DRIVE_SPEED,.5,.5,3,2,false);
-            //encoderDrive(DRIVE_SPEED/3, 10, 10, 4,0, false);
+            turn_right_90();
+            encoderDrive(DRIVE_SPEED,8,8,4,0,false);
+            encoderDrive(DRIVE_SPEED, 4, 4, 4, 3, false);
+            encoderDrive(DRIVE_SPEED/3,.5,.5,3,2,false);
+            encoderDrive(DRIVE_SPEED/3, 10, 10, 4,0, false);
             placePixel();
         }
     }
     public void movemiddle(int BoR){
         if (BoR == 1){
             closePixelClaw();
-            encoderDrive(DRIVE_SPEED,.5,.5,5,2,false);
-            encoderDrive(DRIVE_SPEED-.2,1,1,5,0,false);
+            turn_left_90();
+            encoderDrive(DRIVE_SPEED,-6,-6,5,2,false);
+            encoderDrive(DRIVE_SPEED,10,10,5,0,false);
+            closePixelClaw();
+            encoderDrive(DRIVE_SPEED/3,13,13,3,0,false);
+            encoderDrive(DRIVE_SPEED/3, 4, 4, 4, 3, false);
+            encoderDrive(DRIVE_SPEED/3,5,5,4,0,false);
             placePixel();
         }
         else{
@@ -592,17 +577,15 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
             //encoderDrive(DRIVE_SPEED, 22, 22, 5, 0, false );
             //encoderDrive(DRIVE_SPEED- 0.2,8,8,3,0,false);
             closePixelClaw();
-            //turn_right_90();
-            //encoderDrive(DRIVE_SPEED,-6,-6,5,3,false);
-            //encoderDrive(DRIVE_SPEED,10,10,5,0,false);
-            //closePixelClaw();
-            //encoderDrive(DRIVE_SPEED/3,13,13,3,0,false);
-            //encoderDrive(DRIVE_SPEED/3, 3, 3, 4, 3, false);
-            //encoderDrive(DRIVE_SPEED/3,6,6,5,0,false);
-            encoderDrive(DRIVE_SPEED,9.5,9.5,5,3,false);
-            encoderDrive(DRIVE_SPEED-.2,4,4,5,0,false);
+            turn_right_90();
+            encoderDrive(DRIVE_SPEED,-6,-6,5,3,false);
+            encoderDrive(DRIVE_SPEED,10,10,5,0,false);
+            closePixelClaw();
+            encoderDrive(DRIVE_SPEED/3,13,13,3,0,false);
+            encoderDrive(DRIVE_SPEED/3, 3, 3, 4, 3, false);
+            encoderDrive(DRIVE_SPEED/3,6,6,5,0,false);
             placePixel();
-            //sleep(500);
+            sleep(500);
         }
     }
     public void turnAngle(double angle, int tolerance, double motorPower) {
@@ -640,15 +623,15 @@ public class CenterStage_Auto_goBuilda_Gyroscope extends LinearOpMode{
     }
     public void openPixelClaw() {
         left_gate.setPosition(0.5);
-        right_gate.setPosition(0.5);
+        right_gate.setPosition(0.3);
     }
     public void movePixelArmToPlace() {
-        for(int i = 6; i<=10; i++) {
+        for(int i = 5; i<=10; i++) {
             pixel_arm.setPosition((double)(i) / 10);
         }
     }
     public void retractPixel() {
-        pixel_arm.setPosition(0.6);
+        pixel_arm.setPosition(0.5);
     }
     public void placePixel() {
         movePixelArmToPlace();

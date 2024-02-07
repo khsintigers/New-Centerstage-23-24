@@ -138,7 +138,7 @@ public class CenterStage_Driver extends LinearOpMode{
             }
             if (gamepad2.b) {
                 left_gate.setPosition(0.5);//open
-                right_gate.setPosition(0.3);
+                right_gate.setPosition(0.5);
             }
 
             if (gamepad2.y) {
@@ -146,7 +146,7 @@ public class CenterStage_Driver extends LinearOpMode{
             }
             if (gamepad2.a) {
                 left_gate.setPosition(1); //close
-                right_gate.setPosition(-.1);
+                right_gate.setPosition(0);
             }
 
             if (gamepad1.y) {
